@@ -1,2 +1,2 @@
-# GraphicReporter
-GUI for dt2influx, and at the same time a generator of auto reports for grafana 2 confluence
+# python-autoreporter
+GUI application for download panels from Grafana and upload it to Confluence page.

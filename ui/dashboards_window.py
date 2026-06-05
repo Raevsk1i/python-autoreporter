@@ -6,7 +6,6 @@ from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
     QDialog,
     QFormLayout,
-    QGroupBox,
     QHBoxLayout,
     QInputDialog,
     QLabel,
@@ -22,7 +21,14 @@ from PySide6.QtWidgets import (
 )
 
 from configuration.app_config import AppConfig
-from ui.widgets import make_button_row, make_hint_label, make_scrollable, make_section_title
+from ui.widgets import (
+    make_button_row,
+    make_form_label,
+    make_hint_label,
+    make_scrollable,
+    make_section_card,
+    make_section_title,
+)
 from utils.dashboards_store import load_dashboards_data, save_dashboards_data
 
 
@@ -74,12 +80,11 @@ class DashboardsWindow(QDialog):
         panel = QWidget()
         layout = QVBoxLayout(panel)
 
-        group = QGroupBox("Дашборды")
-        group_layout = QVBoxLayout(group)
+        card, card_layout = make_section_card("Дашборды")
 
         self._dashboard_list = QListWidget()
         self._dashboard_list.currentItemChanged.connect(self._on_dashboard_selected)
-        group_layout.addWidget(self._dashboard_list)
+        card_layout.addWidget(self._dashboard_list)
 
         add_button = QPushButton("Добавить дашборд")
         add_button.clicked.connect(self._add_dashboard)
@@ -90,34 +95,35 @@ class DashboardsWindow(QDialog):
         buttons = QHBoxLayout()
         buttons.addWidget(add_button)
         buttons.addWidget(remove_button)
-        group_layout.addLayout(buttons)
+        card_layout.addLayout(buttons)
 
-        layout.addWidget(group)
+        layout.addWidget(card)
         return panel
 
     def _build_panels_panel(self) -> QWidget:
         content = QWidget()
         layout = QVBoxLayout(content)
 
-        details_group = QGroupBox("Параметры дашборда")
-        details_form = QFormLayout(details_group)
+        details_card, details_layout = make_section_card("Параметры дашборда")
+        details_form = QFormLayout()
+        details_form.setSpacing(12)
+        details_layout.addLayout(details_form)
 
         self._dashboard_key_field = QLineEdit()
         self._dashboard_uid_field = QLineEdit()
         self._dashboard_slug_field = QLineEdit()
 
-        details_form.addRow("Ключ", self._dashboard_key_field)
-        details_form.addRow("Dashboard UID", self._dashboard_uid_field)
-        details_form.addRow("Dashboard Slug", self._dashboard_slug_field)
+        details_form.addRow(make_form_label("Ключ"), self._dashboard_key_field)
+        details_form.addRow(make_form_label("Dashboard UID"), self._dashboard_uid_field)
+        details_form.addRow(make_form_label("Dashboard Slug"), self._dashboard_slug_field)
 
         apply_details_button = QPushButton("Применить параметры дашборда")
         apply_details_button.clicked.connect(self._apply_dashboard_details)
         details_form.addRow("", apply_details_button)
 
-        layout.addWidget(details_group)
+        layout.addWidget(details_card)
 
-        panels_group = QGroupBox("Панели")
-        panels_layout = QVBoxLayout(panels_group)
+        panels_card, panels_layout = make_section_card("Панели")
 
         self._panels_list = QListWidget()
         panels_layout.addWidget(self._panels_list)
@@ -136,7 +142,7 @@ class DashboardsWindow(QDialog):
         panel_buttons.addWidget(remove_panel_button)
         panels_layout.addLayout(panel_buttons)
 
-        layout.addWidget(panels_group, stretch=1)
+        layout.addWidget(panels_card, stretch=1)
 
         scroll = make_scrollable(content)
         scroll.setMinimumWidth(480)
@@ -316,8 +322,8 @@ class DashboardsWindow(QDialog):
         id_spin.setRange(1, 999999)
         id_spin.setValue(int(panel_id) if panel_id else 1)
         name_field = QLineEdit(panel_name)
-        form.addRow("Panel ID", id_spin)
-        form.addRow("Название панели", name_field)
+        form.addRow(make_form_label("Panel ID"), id_spin)
+        form.addRow(make_form_label("Название панели"), name_field)
         layout.addLayout(form)
 
         save_button = QPushButton("Сохранить")

@@ -27,10 +27,43 @@ def make_scrollable(content: QWidget) -> QScrollArea:
     return scroll
 
 
+def make_section_card(title: str) -> tuple[QWidget, QVBoxLayout]:
+    """
+    Создаёт карточку секции с заголовком без артефактов QGroupBox.
+
+    Returns:
+        Кортеж (карточка, layout для содержимого секции).
+    """
+    card = QWidget()
+    card.setObjectName("sectionCard")
+
+    outer = QVBoxLayout(card)
+    outer.setContentsMargins(20, 18, 20, 20)
+    outer.setSpacing(12)
+
+    title_label = QLabel(title)
+    title_label.setObjectName("sectionCardTitle")
+    outer.addWidget(title_label)
+
+    body_layout = QVBoxLayout()
+    body_layout.setContentsMargins(0, 0, 0, 0)
+    body_layout.setSpacing(10)
+    outer.addLayout(body_layout)
+
+    return card, body_layout
+
+
 def make_section_title(text: str) -> QLabel:
-    """Создаёт заголовок секции с единым стилем."""
+    """Создаёт заголовок страницы с единым стилем."""
     label = QLabel(text)
     label.setObjectName("sectionTitle")
+    return label
+
+
+def make_form_label(text: str) -> QLabel:
+    """Создаёт метку поля формы с единым стилем."""
+    label = QLabel(text)
+    label.setObjectName("formLabel")
     return label
 
 
@@ -49,6 +82,7 @@ def make_labeled_input(
 ) -> tuple[QLabel, QLineEdit]:
     """Создаёт пару метка + поле ввода."""
     label = QLabel(label_text)
+    label.setObjectName("formLabel")
     field = QLineEdit()
     field.setPlaceholderText(placeholder)
 
@@ -72,6 +106,7 @@ def make_form_row(label: QLabel, field: QWidget) -> QWidget:
 def make_button_row(*buttons: QPushButton) -> QHBoxLayout:
     """Создаёт горизонтальный ряд кнопок с выравниванием вправо."""
     layout = QHBoxLayout()
+    layout.setSpacing(10)
     layout.addStretch()
 
     for button in buttons:
@@ -87,4 +122,6 @@ def populate_form(
 ) -> None:
     """Добавляет поля ввода в форму по словарю меток."""
     for key, label_text in labels.items():
-        layout.addRow(label_text, fields[key])
+        label = QLabel(label_text)
+        label.setObjectName("formLabel")
+        layout.addRow(label, fields[key])

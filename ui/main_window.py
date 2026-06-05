@@ -8,9 +8,7 @@ from PySide6.QtWidgets import (
     QComboBox,
     QDateTimeEdit,
     QFormLayout,
-    QGroupBox,
     QHBoxLayout,
-    QLabel,
     QLineEdit,
     QMainWindow,
     QMessageBox,
@@ -28,7 +26,14 @@ from services.report_service import ReportService
 from ui.dashboards_window import DashboardsWindow
 from ui.settings_window import SettingsWindow
 from ui.theme_manager import Theme, ThemeManager
-from ui.widgets import make_button_row, make_hint_label, make_scrollable, make_section_title
+from ui.widgets import (
+    make_button_row,
+    make_form_label,
+    make_hint_label,
+    make_scrollable,
+    make_section_card,
+    make_section_title,
+)
 from ui.worker import ReportWorker
 
 
@@ -73,8 +78,8 @@ class MainWindow(QMainWindow):
         central.setAutoFillBackground(True)
         self.setCentralWidget(central)
         root = QVBoxLayout(central)
-        root.setContentsMargins(16, 16, 16, 16)
-        root.setSpacing(12)
+        root.setContentsMargins(20, 20, 20, 20)
+        root.setSpacing(14)
 
         header_row = QHBoxLayout()
         header_row.addWidget(make_section_title("Формирование отчёта"))
@@ -96,34 +101,37 @@ class MainWindow(QMainWindow):
         scroll_content = QWidget()
         scroll_content.setObjectName("scrollContent")
         scroll_layout = QVBoxLayout(scroll_content)
+        scroll_layout.setSpacing(14)
 
-        report_group = QGroupBox("Параметры отчёта")
-        report_form = QFormLayout(report_group)
+        report_card, report_layout = make_section_card("Параметры отчёта")
+        report_form = QFormLayout()
+        report_form.setSpacing(12)
+        report_form.setLabelAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
+        report_layout.addLayout(report_form)
 
         self._dashboard_combo = QComboBox()
         self._dashboard_combo.setPlaceholderText("Выберите дашборд")
-        report_form.addRow("Дашборд", self._dashboard_combo)
+        report_form.addRow(make_form_label("Дашборд"), self._dashboard_combo)
 
         self._from_datetime = QDateTimeEdit()
         self._from_datetime.setDisplayFormat(TIME_FORMAT)
         self._from_datetime.setCalendarPopup(True)
         self._from_datetime.setDateTime(QDateTime.currentDateTime().addDays(-1))
-        report_form.addRow("Начало периода", self._from_datetime)
+        report_form.addRow(make_form_label("Начало периода"), self._from_datetime)
 
         self._to_datetime = QDateTimeEdit()
         self._to_datetime.setDisplayFormat(TIME_FORMAT)
         self._to_datetime.setCalendarPopup(True)
         self._to_datetime.setDateTime(QDateTime.currentDateTime())
-        report_form.addRow("Конец периода", self._to_datetime)
+        report_form.addRow(make_form_label("Конец периода"), self._to_datetime)
 
         self._title_field = QLineEdit()
         self._title_field.setPlaceholderText("Например: Отчёт по мониторингу")
-        report_form.addRow("Заголовок страницы", self._title_field)
+        report_form.addRow(make_form_label("Заголовок страницы"), self._title_field)
 
-        scroll_layout.addWidget(report_group)
+        scroll_layout.addWidget(report_card)
 
-        mode_group = QGroupBox("Режим публикации")
-        mode_layout = QVBoxLayout(mode_group)
+        mode_card, mode_layout = make_section_card("Режим публикации")
 
         mode_buttons = QHBoxLayout()
         self._create_mode_radio = QRadioButton("Создать новую страницу")
@@ -136,18 +144,18 @@ class MainWindow(QMainWindow):
         mode_layout.addLayout(mode_buttons)
 
         target_form = QFormLayout()
+        target_form.setSpacing(12)
         self._parent_id_field = QLineEdit()
         self._parent_id_field.setPlaceholderText("ID родительской страницы Confluence")
         self._page_id_field = QLineEdit()
         self._page_id_field.setPlaceholderText("ID существующей страницы Confluence")
-        target_form.addRow("Parent ID", self._parent_id_field)
-        target_form.addRow("Page ID", self._page_id_field)
+        target_form.addRow(make_form_label("Parent ID"), self._parent_id_field)
+        target_form.addRow(make_form_label("Page ID"), self._page_id_field)
         mode_layout.addLayout(target_form)
 
-        scroll_layout.addWidget(mode_group)
+        scroll_layout.addWidget(mode_card)
 
-        actions_group = QGroupBox("Действия")
-        actions_layout = QVBoxLayout(actions_group)
+        actions_card, actions_layout = make_section_card("Действия")
 
         self._run_button = QPushButton("Создать отчёт")
         self._run_button.setObjectName("primaryButton")
@@ -165,15 +173,14 @@ class MainWindow(QMainWindow):
         actions_layout.addLayout(
             make_button_row(reload_button, dashboards_button, settings_button, self._run_button)
         )
-        scroll_layout.addWidget(actions_group)
+        scroll_layout.addWidget(actions_card)
 
-        log_group = QGroupBox("Журнал")
-        log_layout = QVBoxLayout(log_group)
+        log_card, log_layout = make_section_card("Журнал")
         self._log_view = QPlainTextEdit()
         self._log_view.setReadOnly(True)
         self._log_view.setMinimumHeight(140)
         log_layout.addWidget(self._log_view)
-        scroll_layout.addWidget(log_group)
+        scroll_layout.addWidget(log_card)
 
         scroll_layout.addStretch()
         root.addWidget(make_scrollable(scroll_content), stretch=1)

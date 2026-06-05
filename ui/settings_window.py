@@ -7,7 +7,6 @@ from PySide6.QtWidgets import (
     QDialog,
     QFileDialog,
     QFormLayout,
-    QGroupBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -29,7 +28,14 @@ from configuration.app_config import (
     save_config,
     save_config_path,
 )
-from ui.widgets import make_button_row, make_hint_label, make_scrollable, make_section_title
+from ui.widgets import (
+    make_button_row,
+    make_form_label,
+    make_hint_label,
+    make_scrollable,
+    make_section_card,
+    make_section_title,
+)
 
 
 class SettingsWindow(QDialog):
@@ -90,8 +96,10 @@ class SettingsWindow(QDialog):
         content = QWidget()
         layout = QVBoxLayout(content)
 
-        group = QGroupBox("Параметры Grafana")
-        form = QFormLayout(group)
+        card, card_layout = make_section_card("Параметры Grafana")
+        form = QFormLayout()
+        form.setSpacing(12)
+        card_layout.addLayout(form)
 
         self._grafana_fields = {
             "url": QLineEdit(),
@@ -116,9 +124,9 @@ class SettingsWindow(QDialog):
         }
 
         for key, label_text in labels.items():
-            form.addRow(label_text, self._grafana_fields[key])
+            form.addRow(make_form_label(label_text), self._grafana_fields[key])
 
-        layout.addWidget(group)
+        layout.addWidget(card)
         layout.addStretch()
         return make_scrollable(content)
 
@@ -126,8 +134,10 @@ class SettingsWindow(QDialog):
         content = QWidget()
         layout = QVBoxLayout(content)
 
-        group = QGroupBox("Параметры Confluence")
-        form = QFormLayout(group)
+        card, card_layout = make_section_card("Параметры Confluence")
+        form = QFormLayout()
+        form.setSpacing(12)
+        card_layout.addLayout(form)
 
         self._confluence_fields = {
             "url": QLineEdit(),
@@ -144,9 +154,9 @@ class SettingsWindow(QDialog):
         }
 
         for key, label_text in labels.items():
-            form.addRow(label_text, self._confluence_fields[key])
+            form.addRow(make_form_label(label_text), self._confluence_fields[key])
 
-        layout.addWidget(group)
+        layout.addWidget(card)
         layout.addStretch()
         return make_scrollable(content)
 
@@ -154,18 +164,20 @@ class SettingsWindow(QDialog):
         content = QWidget()
         layout = QVBoxLayout(content)
 
-        group = QGroupBox("Общие параметры")
-        form = QFormLayout(group)
+        card, card_layout = make_section_card("Общие параметры")
+        form = QFormLayout()
+        form.setSpacing(12)
+        card_layout.addLayout(form)
 
         self._general_fields = {
             "report_html_template_path": QLineEdit(),
             "qss_path": QLineEdit(),
         }
 
-        form.addRow("Путь к HTML-шаблону", self._general_fields["report_html_template_path"])
-        form.addRow("Путь к QSS-стилям", self._general_fields["qss_path"])
+        form.addRow(make_form_label("Путь к HTML-шаблону"), self._general_fields["report_html_template_path"])
+        form.addRow(make_form_label("Путь к QSS-стилям"), self._general_fields["qss_path"])
 
-        layout.addWidget(group)
+        layout.addWidget(card)
         layout.addStretch()
         return make_scrollable(content)
 
@@ -173,27 +185,31 @@ class SettingsWindow(QDialog):
         content = QWidget()
         layout = QVBoxLayout(content)
 
-        confluence_group = QGroupBox("Confluence")
-        confluence_form = QFormLayout(confluence_group)
+        confluence_card, confluence_layout = make_section_card("Confluence")
+        confluence_form = QFormLayout()
+        confluence_form.setSpacing(12)
+        confluence_layout.addLayout(confluence_form)
         self._confluence_username = QLineEdit()
         self._confluence_token = QLineEdit()
         self._confluence_token.setEchoMode(QLineEdit.EchoMode.Password)
-        confluence_form.addRow("Имя пользователя", self._confluence_username)
-        confluence_form.addRow("API-токен", self._confluence_token)
+        confluence_form.addRow(make_form_label("Имя пользователя"), self._confluence_username)
+        confluence_form.addRow(make_form_label("API-токен"), self._confluence_token)
 
-        grafana_group = QGroupBox("Grafana")
-        grafana_form = QFormLayout(grafana_group)
+        grafana_card, grafana_layout = make_section_card("Grafana")
+        grafana_form = QFormLayout()
+        grafana_form.setSpacing(12)
+        grafana_layout.addLayout(grafana_form)
         self._grafana_username = QLineEdit()
         self._grafana_password = QLineEdit()
         self._grafana_password.setEchoMode(QLineEdit.EchoMode.Password)
         self._grafana_token = QLineEdit()
         self._grafana_token.setEchoMode(QLineEdit.EchoMode.Password)
-        grafana_form.addRow("Имя пользователя", self._grafana_username)
-        grafana_form.addRow("Пароль", self._grafana_password)
-        grafana_form.addRow("API-токен (приоритетнее пароля)", self._grafana_token)
+        grafana_form.addRow(make_form_label("Имя пользователя"), self._grafana_username)
+        grafana_form.addRow(make_form_label("Пароль"), self._grafana_password)
+        grafana_form.addRow(make_form_label("API-токен (приоритетнее пароля)"), self._grafana_token)
 
-        layout.addWidget(confluence_group)
-        layout.addWidget(grafana_group)
+        layout.addWidget(confluence_card)
+        layout.addWidget(grafana_card)
         layout.addWidget(
             make_hint_label(
                 "Если задан API-токен Grafana, Basic Auth не используется. "

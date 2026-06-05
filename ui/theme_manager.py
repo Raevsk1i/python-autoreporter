@@ -85,8 +85,8 @@ class ThemeManager:
         self._app = app
         self._qss_path = Path(qss_path)
         self._settings = QSettings("python-autoreporter", "python-autoreporter")
-        stored = self._settings.value(self.SETTINGS_KEY, Theme.DARK.value)
-        self._theme = Theme(stored) if stored in Theme._value2member_map_ else Theme.DARK
+        stored = self._settings.value(self.SETTINGS_KEY, Theme.LIGHT.value)
+        self._theme = Theme(stored) if stored in Theme._value2member_map_ else Theme.LIGHT
 
     @property
     def theme(self) -> Theme:
@@ -99,20 +99,12 @@ class ThemeManager:
         return self._qss_path
 
     def _apply_font(self) -> None:
-        """Задаёт сглаженный шрифт с мягкими начертаниями."""
+        """Задаёт сглаженный системный шрифт."""
         font = QFont()
-        font.setFamilies(
-            [
-                "Inter",
-                "Nunito Sans",
-                "Segoe UI Variable",
-                "Segoe UI",
-                "Helvetica Neue",
-                "sans-serif",
-            ]
-        )
+        font.setFamilies(["Segoe UI Variable", "Segoe UI", "Helvetica Neue", "sans-serif"])
         font.setPointSize(10)
         font.setWeight(QFont.Weight.Normal)
+        font.setHintingPreference(QFont.HintingPreference.PreferNoHinting)
         font.setStyleStrategy(QFont.StyleStrategy.PreferAntialias)
         self._app.setFont(font)
 

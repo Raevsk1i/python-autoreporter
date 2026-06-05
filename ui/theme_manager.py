@@ -5,6 +5,7 @@ from enum import Enum
 from pathlib import Path
 
 from PySide6.QtCore import QSettings
+from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QApplication
 
 DEFAULT_QSS_PATH = Path("data/style.qss")
@@ -97,11 +98,30 @@ class ThemeManager:
         """Путь к файлу стилей."""
         return self._qss_path
 
+    def _apply_font(self) -> None:
+        """Задаёт сглаженный шрифт с мягкими начертаниями."""
+        font = QFont()
+        font.setFamilies(
+            [
+                "Inter",
+                "Nunito Sans",
+                "Segoe UI Variable",
+                "Segoe UI",
+                "Helvetica Neue",
+                "sans-serif",
+            ]
+        )
+        font.setPointSize(10)
+        font.setWeight(QFont.Weight.Normal)
+        font.setStyleStrategy(QFont.StyleStrategy.PreferAntialias)
+        self._app.setFont(font)
+
     def apply(self, theme: Theme | None = None) -> None:
         """Применяет тему ко всему приложению."""
         if theme is not None:
             self._theme = theme
 
+        self._apply_font()
         qss = load_theme_qss(self._theme, self._qss_path)
         self._app.setStyleSheet(qss)
         self._settings.setValue(self.SETTINGS_KEY, self._theme.value)

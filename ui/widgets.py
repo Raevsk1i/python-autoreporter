@@ -15,9 +15,14 @@ from PySide6.QtWidgets import (
 
 def make_scrollable(content: QWidget) -> QScrollArea:
     """Оборачивает виджет в прокручиваемую область."""
+    content.setObjectName("scrollContent")
+    content.setAutoFillBackground(True)
+
     scroll = QScrollArea()
+    scroll.setObjectName("contentScrollArea")
     scroll.setWidgetResizable(True)
     scroll.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+    scroll.setFrameShape(QScrollArea.Shape.NoFrame)
     scroll.setWidget(content)
     return scroll
 

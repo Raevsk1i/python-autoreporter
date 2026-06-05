@@ -69,6 +69,8 @@ class MainWindow(QMainWindow):
 
     def _build_ui(self) -> None:
         central = QWidget()
+        central.setObjectName("centralWidget")
+        central.setAutoFillBackground(True)
         self.setCentralWidget(central)
         root = QVBoxLayout(central)
         root.setContentsMargins(16, 16, 16, 16)
@@ -92,6 +94,7 @@ class MainWindow(QMainWindow):
         )
 
         scroll_content = QWidget()
+        scroll_content.setObjectName("scrollContent")
         scroll_layout = QVBoxLayout(scroll_content)
 
         report_group = QGroupBox("Параметры отчёта")

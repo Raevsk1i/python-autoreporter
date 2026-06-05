@@ -1,9 +1,14 @@
 """Управление светлой и тёмной темами приложения."""
 
+import re
 from enum import Enum
+from pathlib import Path
 
 from PySide6.QtCore import QSettings
 from PySide6.QtWidgets import QApplication
+
+DEFAULT_QSS_PATH = Path("data/style.qss")
+THEME_MARKER = re.compile(r"/\*\s*===\s*THEME:(\w+)\s*===\s*\*/")
 
 
 class Theme(Enum):
@@ -13,483 +18,57 @@ class Theme(Enum):
     DARK = "dark"
 
 
-LIGHT_QSS = """
-* {
-    font-family: "Segoe UI", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
-    font-size: 13px;
-}
+def _parse_theme_sections(qss_text: str) -> dict[str, str]:
+    """Разбирает QSS-файл на секции по маркерам тем."""
+    sections: dict[str, str] = {}
+    current_theme: str | None = None
+    buffer: list[str] = []
 
-QMainWindow, QDialog {
-    background-color: #f4f6f9;
-}
+    for line in qss_text.splitlines():
+        marker = THEME_MARKER.match(line.strip())
+        if marker:
+            if current_theme is not None:
+                sections[current_theme] = "\n".join(buffer).strip()
+            current_theme = marker.group(1).lower()
+            buffer = []
+            continue
 
-QWidget {
-    color: #1e293b;
-}
+        if current_theme is not None:
+            buffer.append(line)
 
-QGroupBox {
-    background-color: #ffffff;
-    border: 1px solid #d8dee9;
-    border-radius: 10px;
-    margin-top: 14px;
-    padding: 16px 12px 12px 12px;
-    font-weight: 600;
-}
+    if current_theme is not None:
+        sections[current_theme] = "\n".join(buffer).strip()
 
-QGroupBox::title {
-    subcontrol-origin: margin;
-    subcontrol-position: top left;
-    left: 12px;
-    padding: 0 6px;
-    color: #334155;
-}
+    return sections
 
-QLabel {
-    color: #334155;
-    background: transparent;
-}
 
-QLabel#sectionTitle {
-    font-size: 15px;
-    font-weight: 700;
-    color: #0f172a;
-}
+def load_theme_qss(theme: Theme, qss_path: Path | str = DEFAULT_QSS_PATH) -> str:
+    """
+    Загружает стили указанной темы из QSS-файла.
 
-QLabel#hintLabel {
-    color: #64748b;
-    font-size: 12px;
-}
+    Args:
+        theme: Тема оформления.
+        qss_path: Путь к файлу style.qss с секциями тем.
 
-QLineEdit, QComboBox, QSpinBox, QDateTimeEdit, QTextEdit, QPlainTextEdit {
-    background-color: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    padding: 8px 10px;
-    selection-background-color: #93c5fd;
-    selection-color: #0f172a;
-}
+    Returns:
+        Строка QSS для выбранной темы.
 
-QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDateTimeEdit:focus,
-QTextEdit:focus, QPlainTextEdit:focus {
-    border: 1px solid #3b82f6;
-}
+    Raises:
+        FileNotFoundError: Если файл стилей не найден.
+        ValueError: Если секция темы отсутствует в файле.
+    """
+    path = Path(qss_path)
 
-QComboBox::drop-down {
-    border: none;
-    width: 24px;
-}
+    if not path.is_file():
+        raise FileNotFoundError(f"Файл стилей не найден: {path}")
 
-QComboBox QAbstractItemView {
-    background-color: #ffffff;
-    border: 1px solid #cbd5e1;
-    selection-background-color: #dbeafe;
-    selection-color: #1e293b;
-}
+    sections = _parse_theme_sections(path.read_text(encoding="utf-8"))
+    theme_key = theme.value
 
-QPushButton {
-    background-color: #e2e8f0;
-    color: #1e293b;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    padding: 8px 16px;
-    font-weight: 600;
-}
+    if theme_key not in sections:
+        raise ValueError(f"Секция темы «{theme_key}» не найдена в {path}")
 
-QPushButton:hover {
-    background-color: #cbd5e1;
-}
-
-QPushButton:pressed {
-    background-color: #94a3b8;
-}
-
-QPushButton#primaryButton {
-    background-color: #2563eb;
-    color: #ffffff;
-    border: 1px solid #1d4ed8;
-}
-
-QPushButton#primaryButton:hover {
-    background-color: #1d4ed8;
-}
-
-QPushButton#primaryButton:pressed {
-    background-color: #1e40af;
-}
-
-QPushButton#dangerButton {
-    background-color: #fef2f2;
-    color: #b91c1c;
-    border: 1px solid #fecaca;
-}
-
-QPushButton#dangerButton:hover {
-    background-color: #fee2e2;
-}
-
-QPushButton#ghostButton {
-    background-color: transparent;
-    border: 1px solid #cbd5e1;
-}
-
-QRadioButton, QCheckBox {
-    spacing: 8px;
-}
-
-QRadioButton::indicator, QCheckBox::indicator {
-    width: 16px;
-    height: 16px;
-}
-
-QScrollArea {
-    border: none;
-    background: transparent;
-}
-
-QScrollBar:vertical {
-    background: #eef2f7;
-    width: 10px;
-    margin: 0;
-    border-radius: 5px;
-}
-
-QScrollBar::handle:vertical {
-    background: #cbd5e1;
-    min-height: 24px;
-    border-radius: 5px;
-}
-
-QScrollBar::handle:vertical:hover {
-    background: #94a3b8;
-}
-
-QListWidget {
-    background-color: #ffffff;
-    border: 1px solid #d8dee9;
-    border-radius: 8px;
-    padding: 4px;
-}
-
-QListWidget::item {
-    padding: 8px 10px;
-    border-radius: 6px;
-}
-
-QListWidget::item:selected {
-    background-color: #dbeafe;
-    color: #1e3a8a;
-}
-
-QTabWidget::pane {
-    border: 1px solid #d8dee9;
-    border-radius: 8px;
-    background: #ffffff;
-    top: -1px;
-}
-
-QTabBar::tab {
-    background: #e2e8f0;
-    color: #475569;
-    padding: 8px 16px;
-    margin-right: 4px;
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
-}
-
-QTabBar::tab:selected {
-    background: #ffffff;
-    color: #1e293b;
-    font-weight: 600;
-}
-
-QStatusBar {
-    background: #ffffff;
-    color: #64748b;
-    border-top: 1px solid #d8dee9;
-}
-
-QMenuBar {
-    background: #ffffff;
-    border-bottom: 1px solid #d8dee9;
-}
-
-QMenuBar::item:selected {
-    background: #e2e8f0;
-}
-
-QMenu {
-    background: #ffffff;
-    border: 1px solid #d8dee9;
-}
-
-QMenu::item:selected {
-    background: #dbeafe;
-}
-
-QToolBar {
-    background: #ffffff;
-    border-bottom: 1px solid #d8dee9;
-    spacing: 6px;
-    padding: 4px;
-}
-
-QProgressBar {
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    background: #f1f5f9;
-    text-align: center;
-    color: #334155;
-}
-
-QProgressBar::chunk {
-    background: #3b82f6;
-    border-radius: 5px;
-}
-"""
-
-DARK_QSS = """
-* {
-    font-family: "Segoe UI", "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
-    font-size: 13px;
-}
-
-QMainWindow, QDialog {
-    background-color: #14141f;
-}
-
-QWidget {
-    color: #e2e8f0;
-}
-
-QGroupBox {
-    background-color: #1c1c2b;
-    border: 1px solid #2d2d44;
-    border-radius: 10px;
-    margin-top: 14px;
-    padding: 16px 12px 12px 12px;
-    font-weight: 600;
-}
-
-QGroupBox::title {
-    subcontrol-origin: margin;
-    subcontrol-position: top left;
-    left: 12px;
-    padding: 0 6px;
-    color: #c4b5fd;
-}
-
-QLabel {
-    color: #cbd5e1;
-    background: transparent;
-}
-
-QLabel#sectionTitle {
-    font-size: 15px;
-    font-weight: 700;
-    color: #f5f3ff;
-}
-
-QLabel#hintLabel {
-    color: #94a3b8;
-    font-size: 12px;
-}
-
-QLineEdit, QComboBox, QSpinBox, QDateTimeEdit, QTextEdit, QPlainTextEdit {
-    background-color: #232336;
-    border: 1px solid #3f3f5c;
-    border-radius: 8px;
-    padding: 8px 10px;
-    color: #f1f5f9;
-    selection-background-color: #7c3aed;
-    selection-color: #ffffff;
-}
-
-QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDateTimeEdit:focus,
-QTextEdit:focus, QPlainTextEdit:focus {
-    border: 1px solid #a855f7;
-}
-
-QComboBox::drop-down {
-    border: none;
-    width: 24px;
-}
-
-QComboBox QAbstractItemView {
-    background-color: #232336;
-    border: 1px solid #5b21b6;
-    selection-background-color: #6d28d9;
-    selection-color: #ffffff;
-}
-
-QPushButton {
-    background-color: #2a2a3d;
-    color: #e2e8f0;
-    border: 1px solid #3f3f5c;
-    border-radius: 8px;
-    padding: 8px 16px;
-    font-weight: 600;
-}
-
-QPushButton:hover {
-    background-color: #35354d;
-    border-color: #7c3aed;
-}
-
-QPushButton:pressed {
-    background-color: #1f1f30;
-}
-
-QPushButton#primaryButton {
-    background-color: #7c3aed;
-    color: #ffffff;
-    border: 1px solid #a855f7;
-}
-
-QPushButton#primaryButton:hover {
-    background-color: #8b5cf6;
-    border-color: #c084fc;
-}
-
-QPushButton#primaryButton:pressed {
-    background-color: #6d28d9;
-}
-
-QPushButton#dangerButton {
-    background-color: #3b1f2b;
-    color: #fca5a5;
-    border: 1px solid #7f1d1d;
-}
-
-QPushButton#dangerButton:hover {
-    background-color: #4c1d2a;
-    border-color: #ef4444;
-}
-
-QPushButton#ghostButton {
-    background-color: transparent;
-    border: 1px solid #4c4c6a;
-}
-
-QRadioButton, QCheckBox {
-    spacing: 8px;
-}
-
-QRadioButton::indicator, QCheckBox::indicator {
-    width: 16px;
-    height: 16px;
-}
-
-QScrollArea {
-    border: none;
-    background: transparent;
-}
-
-QScrollBar:vertical {
-    background: #1c1c2b;
-    width: 10px;
-    margin: 0;
-    border-radius: 5px;
-}
-
-QScrollBar::handle:vertical {
-    background: #5b21b6;
-    min-height: 24px;
-    border-radius: 5px;
-}
-
-QScrollBar::handle:vertical:hover {
-    background: #7c3aed;
-}
-
-QListWidget {
-    background-color: #1c1c2b;
-    border: 1px solid #2d2d44;
-    border-radius: 8px;
-    padding: 4px;
-}
-
-QListWidget::item {
-    padding: 8px 10px;
-    border-radius: 6px;
-}
-
-QListWidget::item:selected {
-    background-color: #4c1d95;
-    color: #f5f3ff;
-}
-
-QTabWidget::pane {
-    border: 1px solid #2d2d44;
-    border-radius: 8px;
-    background: #1c1c2b;
-    top: -1px;
-}
-
-QTabBar::tab {
-    background: #232336;
-    color: #94a3b8;
-    padding: 8px 16px;
-    margin-right: 4px;
-    border-top-left-radius: 8px;
-    border-top-right-radius: 8px;
-}
-
-QTabBar::tab:selected {
-    background: #1c1c2b;
-    color: #e9d5ff;
-    font-weight: 600;
-    border-bottom: 2px solid #a855f7;
-}
-
-QStatusBar {
-    background: #1c1c2b;
-    color: #94a3b8;
-    border-top: 1px solid #2d2d44;
-}
-
-QMenuBar {
-    background: #1c1c2b;
-    border-bottom: 1px solid #2d2d44;
-    color: #e2e8f0;
-}
-
-QMenuBar::item:selected {
-    background: #2a2a3d;
-}
-
-QMenu {
-    background: #1c1c2b;
-    border: 1px solid #3f3f5c;
-    color: #e2e8f0;
-}
-
-QMenu::item:selected {
-    background: #4c1d95;
-}
-
-QToolBar {
-    background: #1c1c2b;
-    border-bottom: 1px solid #2d2d44;
-    spacing: 6px;
-    padding: 4px;
-}
-
-QProgressBar {
-    border: 1px solid #3f3f5c;
-    border-radius: 6px;
-    background: #232336;
-    text-align: center;
-    color: #e2e8f0;
-}
-
-QProgressBar::chunk {
-    background: qlineargradient(
-        x1:0, y1:0, x2:1, y2:0,
-        stop:0 #7c3aed, stop:1 #a855f7
-    );
-    border-radius: 5px;
-}
-"""
+    return sections[theme_key]
 
 
 class ThemeManager:
@@ -497,8 +76,13 @@ class ThemeManager:
 
     SETTINGS_KEY = "ui/theme"
 
-    def __init__(self, app: QApplication) -> None:
+    def __init__(
+        self,
+        app: QApplication,
+        qss_path: Path | str = DEFAULT_QSS_PATH,
+    ) -> None:
         self._app = app
+        self._qss_path = Path(qss_path)
         self._settings = QSettings("python-autoreporter", "python-autoreporter")
         stored = self._settings.value(self.SETTINGS_KEY, Theme.DARK.value)
         self._theme = Theme(stored) if stored in Theme._value2member_map_ else Theme.DARK
@@ -508,12 +92,17 @@ class ThemeManager:
         """Текущая активная тема."""
         return self._theme
 
+    @property
+    def qss_path(self) -> Path:
+        """Путь к файлу стилей."""
+        return self._qss_path
+
     def apply(self, theme: Theme | None = None) -> None:
         """Применяет тему ко всему приложению."""
         if theme is not None:
             self._theme = theme
 
-        qss = LIGHT_QSS if self._theme == Theme.LIGHT else DARK_QSS
+        qss = load_theme_qss(self._theme, self._qss_path)
         self._app.setStyleSheet(qss)
         self._settings.setValue(self.SETTINGS_KEY, self._theme.value)
 

@@ -31,6 +31,7 @@ class ConfluenceConfig:
     url: str
     space_key: str
     ssl_certificate_path: str
+    macro_id: str
 
 
 @dataclass(frozen=True)
@@ -134,14 +135,16 @@ def load_config(config_path: str | Path | None = None,) -> AppConfig:
         timeout=parser.get("grafana", "timeout"),
         timezone=parser.get("grafana", "timezone"),
         org_id=parser.get("grafana", "org_id"),
-        tmp_dir=parser.get("general", "tmp_dir", ),
-        dashboards_path=parser.get("general", "dashboards_path", ),
+        tmp_dir=parser.get("grafana", "tmp_dir", ),
+        dashboards_path=parser.get("grafana", "dashboards_path", ),
     )
 
     confluence = ConfluenceConfig(
         url=parser.get("confluence", "url"),
         space_key=parser.get("confluence","space_key",),
         ssl_certificate_path=parser.get("confluence","ssl_certificate_path",),
+        macro_id=parser.get("confluence","macro_id",),
+
     )
 
     general = GeneralConfig(

@@ -35,7 +35,7 @@ def main():
         confluence_service.upload_attachment(
             panel=panel,
             page_id="23232",
-            file_path=Path("tmp/grafana_panels/".join(f"panel_{panel.panel_id}_{panel.panel_name}.png"))
+            file_path=Path("tmp/grafana_panels/" + f"panel_{panel.panel_id}_{panel.panel_name}.png")
         )
 
     html_doc = confluence_service.build_html_page(dashboard.panels)

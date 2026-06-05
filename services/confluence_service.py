@@ -14,9 +14,9 @@ class ConfluenceService:
     def __init__(self, config: ConfluenceConfig):
         self._config = config
         self._logger = logging.getLogger("ConfluenceService")
-        self._tmp_dir = tmp_dir
         self._url = config.url
         self._space_key = config.space_key
+        self._macro_id = config.macro_id
         self._ssl_certificate_path = config.ssl_certificate_path
         self._client = Confluence(
             url=self._url,
@@ -60,15 +60,14 @@ class ConfluenceService:
     def build_html_page(self, panels: list[Panel]) -> str:
         start = (
             '<ac:structured-macro ac:name="expand" ac:schema-version="1" '
-            'ac:macro-id="9dbdf19d-b8c1-2g5d-b3e5-7f1e3a84682e">'
+            f'ac:macro-id="{self._macro_id}">'
             '<ac:parameter ac:name="title">Графики</ac:parameter>'
             '<ac:rich-text-body>'
         )
         end = '</ac:rich-text-body></ac:structured-macro>'
         table_chunk = []
         for panel in panels:
-            table_chunk.append(f"<h2>{panel.panel_name}</h2><p><ac:image ac:width\"1000\">"
-                               f"<ri:attachment ri:filename\"panel_{panel.panel_id}_{panel.panel_name}.png\" /></ac:image></p>")
+            table_chunk.append(f"<h2>{panel.panel_name}</h2><p><ac:image ac:width\"1000\"><ri:attachment ri:filename\"panel_{panel.panel_id}_{panel.panel_name}.png\" /></ac:image></p>")
 
         result = start + "".join(table_chunk) + end
 
@@ -86,7 +85,7 @@ class ConfluenceService:
         )
 
     def update_page(self, html: str, page_id: str, title: str) -> None:
-        self._client.update_page(
+        self._client.update_existing_page(
             page_id=page_id,
             title=title,
             body=html)

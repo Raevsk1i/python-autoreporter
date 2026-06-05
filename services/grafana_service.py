@@ -31,6 +31,12 @@ class Dashboard:
 class GrafanaService:
 
     def __init__(self, config: GrafanaConfig):
+
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+        )
+
         self._config = config
         self._log = logging.getLogger("GrafanaService")
         self._grafana_url = config.url
@@ -118,11 +124,11 @@ class GrafanaService:
 
             response.raise_for_status()
 
-            Path(self._tmp_dir).parent.mkdir(
+            Path(self._tmp_dir).mkdir(
                 parents=True,
                 exist_ok=True,
             )
-            file = self._tmp_dir + "/".join(filename)
+            file = self._tmp_dir / filename
             with open(file, "wb") as f:
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)

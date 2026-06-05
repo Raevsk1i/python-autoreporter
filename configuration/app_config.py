@@ -1,4 +1,4 @@
-# app_config.py подтягивает конфиги в классы
+"""Загрузка и хранение конфигурации приложения из config.ini."""
 
 from configparser import ConfigParser
 from dataclasses import dataclass
@@ -9,13 +9,10 @@ import keyring
 from configuration.credentials import SERVICE_NAME
 
 
-#=====================================================================#
-#                           Configuration                             #
-#=====================================================================#
-
-
 @dataclass(frozen=True)
 class GrafanaConfig:
+    """Параметры подключения к Grafana и рендеринга панелей."""
+
     url: str
     width: str
     height: str
@@ -28,6 +25,8 @@ class GrafanaConfig:
 
 @dataclass(frozen=True)
 class ConfluenceConfig:
+    """Параметры подключения к Confluence и публикации отчётов."""
+
     url: str
     space_key: str
     ssl_certificate_path: str
@@ -36,12 +35,16 @@ class ConfluenceConfig:
 
 @dataclass(frozen=True)
 class GeneralConfig:
+    """Общие пути к шаблонам и ресурсам приложения."""
+
     report_html_template_path: str
     qss_path: str
 
 
 @dataclass(frozen=True)
 class AppConfig:
+    """Корневая конфигурация приложения, объединяющая все секции."""
+
     grafana: GrafanaConfig
     confluence: ConfluenceConfig
     general: GeneralConfig
@@ -49,18 +52,16 @@ class AppConfig:
 
 def get_config_path() -> Path:
     """
-    Ищет config.ini в следующем порядке:
+    Возвращает путь к файлу config.ini.
 
-    1. Путь из keyring
-    2. ./config.ini
+    Поиск выполняется в следующем порядке:
+    1. Путь, сохранённый в keyring.
+    2. Локальный файл ./config.ini.
 
-    Если файл не найден — выбрасывает FileNotFoundError.
+    Raises:
+        FileNotFoundError: Если конфигурационный файл не найден.
     """
-
-    stored_path = keyring.get_password(
-        SERVICE_NAME,
-        "CONFIG_PATH",
-    )
+    stored_path = keyring.get_password(SERVICE_NAME, "CONFIG_PATH")
 
     if stored_path:
         config_path = Path(stored_path)
@@ -69,10 +70,7 @@ def get_config_path() -> Path:
             return config_path
 
         try:
-            keyring.delete_password(
-                SERVICE_NAME,
-                "CONFIG_PATH",
-            )
+            keyring.delete_password(SERVICE_NAME, "CONFIG_PATH")
         except Exception:
             pass
 
@@ -81,52 +79,38 @@ def get_config_path() -> Path:
     if local_config.is_file():
         return local_config
 
-    raise FileNotFoundError(
-        "Конфигурационный файл не найден."
-    )
+    raise FileNotFoundError("Конфигурационный файл не найден.")
 
 
 def save_config_path(path: str | Path) -> None:
+    """Сохраняет путь к конфигурационному файлу в keyring."""
+    keyring.set_password(SERVICE_NAME, "CONFIG_PATH", str(path))
+
+
+def load_config(config_path: str | Path | None = None) -> AppConfig:
     """
-    Сохраняет путь к конфигу в keyring.
+    Загружает конфигурацию приложения из INI-файла.
+
+    Args:
+        config_path: Путь к config.ini. Если не указан, используется get_config_path().
+
+    Raises:
+        FileNotFoundError: Если файл конфигурации не существует.
+        RuntimeError: Если файл не удалось прочитать.
     """
-
-    keyring.set_password(
-        SERVICE_NAME,
-        "CONFIG_PATH",
-        str(path),
-    )
-
-
-def load_config(config_path: str | Path | None = None,) -> AppConfig:
-    """
-    Загружает конфигурацию приложения.
-
-    Если путь не указан —
-    используется get_config_path().
-    """
-
     if config_path is None:
         config_path = get_config_path()
 
     config_path = Path(config_path)
 
     if not config_path.is_file():
-        raise FileNotFoundError(
-            f"Файл конфигурации не найден: {config_path}"
-        )
+        raise FileNotFoundError(f"Файл конфигурации не найден: {config_path}")
 
     parser = ConfigParser()
-
-    files = parser.read(
-        config_path,
-        encoding="utf-8",
-    )
+    files = parser.read(config_path, encoding="utf-8")
 
     if not files:
-        raise RuntimeError(
-            f"Не удалось прочитать конфиг: {config_path}"
-        )
+        raise RuntimeError(f"Не удалось прочитать конфиг: {config_path}")
 
     grafana = GrafanaConfig(
         url=parser.get("grafana", "url"),
@@ -135,21 +119,20 @@ def load_config(config_path: str | Path | None = None,) -> AppConfig:
         timeout=parser.get("grafana", "timeout"),
         timezone=parser.get("grafana", "timezone"),
         org_id=parser.get("grafana", "org_id"),
-        tmp_dir=parser.get("grafana", "tmp_dir", ),
-        dashboards_path=parser.get("grafana", "dashboards_path", ),
+        tmp_dir=parser.get("grafana", "tmp_dir"),
+        dashboards_path=parser.get("grafana", "dashboards_path"),
     )
 
     confluence = ConfluenceConfig(
         url=parser.get("confluence", "url"),
-        space_key=parser.get("confluence","space_key",),
-        ssl_certificate_path=parser.get("confluence","ssl_certificate_path",),
-        macro_id=parser.get("confluence","macro_id",),
-
+        space_key=parser.get("confluence", "space_key"),
+        ssl_certificate_path=parser.get("confluence", "ssl_certificate_path"),
+        macro_id=parser.get("confluence", "macro_id"),
     )
 
     general = GeneralConfig(
-        report_html_template_path=parser.get("general","report_html_template_path",),
-        qss_path=parser.get("general","qss_path",),
+        report_html_template_path=parser.get("general", "report_html_template_path"),
+        qss_path=parser.get("general", "qss_path"),
     )
 
     return AppConfig(

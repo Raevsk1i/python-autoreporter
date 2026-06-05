@@ -79,6 +79,16 @@ QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDateTimeEdit:focus {
     background-color: #ffffff;
 }
 
+QLineEdit:disabled, QComboBox:disabled, QSpinBox:disabled, QDateTimeEdit:disabled {
+    background-color: #f0edf5;
+    color: #a8a0b8;
+    border: 1px solid #e4e0ec;
+}
+
+QLabel#formLabel:disabled {
+    color: #b0a8c0;
+}
+
 QTextEdit, QPlainTextEdit {
     background-color: #ffffff;
     border: 1px solid #e0d6f2;
@@ -520,6 +530,16 @@ QLineEdit:hover, QComboBox:hover, QSpinBox:hover, QDateTimeEdit:hover {
 
 QLineEdit:focus, QComboBox:focus, QSpinBox:focus, QDateTimeEdit:focus {
     border: 1px solid #a855f7;
+}
+
+QLineEdit:disabled, QComboBox:disabled, QSpinBox:disabled, QDateTimeEdit:disabled {
+    background-color: #1a1a28;
+    color: #5c5c70;
+    border: 1px solid #2a2a3d;
+}
+
+QLabel#formLabel:disabled {
+    color: #5c5c70;
 }
 
 QTextEdit, QPlainTextEdit {

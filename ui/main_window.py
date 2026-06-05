@@ -149,8 +149,10 @@ class MainWindow(QMainWindow):
         self._parent_id_field.setPlaceholderText("ID родительской страницы Confluence")
         self._page_id_field = QLineEdit()
         self._page_id_field.setPlaceholderText("ID существующей страницы Confluence")
-        target_form.addRow(make_form_label("Parent ID"), self._parent_id_field)
-        target_form.addRow(make_form_label("Page ID"), self._page_id_field)
+        self._parent_id_label = make_form_label("Parent ID")
+        self._page_id_label = make_form_label("Page ID")
+        target_form.addRow(self._parent_id_label, self._parent_id_field)
+        target_form.addRow(self._page_id_label, self._page_id_field)
         mode_layout.addLayout(target_form)
 
         scroll_layout.addWidget(mode_card)
@@ -205,7 +207,9 @@ class MainWindow(QMainWindow):
 
     def _update_mode_fields(self) -> None:
         create_mode = self._create_mode_radio.isChecked()
+        self._parent_id_label.setEnabled(create_mode)
         self._parent_id_field.setEnabled(create_mode)
+        self._page_id_label.setEnabled(not create_mode)
         self._page_id_field.setEnabled(not create_mode)
         self._run_button.setText("Создать отчёт" if create_mode else "Обновить отчёт")
 

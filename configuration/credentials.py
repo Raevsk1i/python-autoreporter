@@ -32,7 +32,7 @@ def get_grafana_password() -> str | None:
 
 def set_grafana_token(token: str) -> None:
     """Сохраняет API-токен Grafana в keyring."""
-    keyring.set_password(SERVICE_NAME, "GRAFANA__API_TOKEN", token)
+    keyring.set_password(SERVICE_NAME, "GRAFANA_API_TOKEN", token)
 
 
 def set_confluence_auth(username: str, token: str) -> None:

@@ -84,12 +84,7 @@ class ConfluenceService:
         """Формирует HTML-блок для одной панели с изображением-вложением."""
         attachment_name = f"panel_{panel.panel_id}_{panel.panel_name}.png"
 
-        return (
-            f"<h2>{panel.panel_name}</h2>"
-            f'<p><ac:image ac:width"1000">'
-            f'<ri:attachment ri:filename"{attachment_name}" />'
-            f"</ac:image></p>"
-        )
+        return f"<h2>{panel.panel_name}</h2><p><ac:image ac:width=\"1000\"><ri:attachment ri:filename=\"{attachment_name}\" /></ac:image></p>"
 
     def _build_graphics_macro(self, panels: list[Panel]) -> str:
         """Собирает содержимое макроса «expand» с графиками всех панелей."""

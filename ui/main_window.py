@@ -1,24 +1,12 @@
-# ui.main_window.py
+"""Главное окно приложения python-autoreporter."""
 
-from pathlib import Path
-from configuration.app_config import load_config
-from PySide6.QtWidgets import (
-    QApplication,
-    QMainWindow,
-    QWidget,
-    QLabel,
-    QLineEdit,
-    QPushButton,
-    QTextEdit,
-    QFileDialog,
-    QVBoxLayout,
-    QHBoxLayout,
-    QMessageBox,
-)
+from PySide6.QtWidgets import QMainWindow
 
 
 class MainWindow(QMainWindow):
-    def __init__(self):
-        super().__init__()
+    """Основное окно приложения с элементами управления отчётами."""
 
+    def __init__(self) -> None:
+        """Инициализирует главное окно и задаёт его заголовок."""
+        super().__init__()
         self.setWindowTitle("python-autoreporter")

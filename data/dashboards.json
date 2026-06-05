@@ -1,0 +1,20 @@
+{
+  "leronet": {
+    "dashboard_uid": "abc123",
+    "dashboard_slug": "leronet-nt",
+    "panels": [
+      {
+        "panel_id": 2,
+        "panel_name": "CPU Usage"
+      },
+      {
+        "panel_id": 1,
+        "panel_name": "RAM Usage"
+      },
+      {
+        "panel_id": 3,
+        "panel_name": "Disk Usage"
+      }
+    ]
+  }
+}

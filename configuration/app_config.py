@@ -140,3 +140,49 @@ def load_config(config_path: str | Path | None = None) -> AppConfig:
         confluence=confluence,
         general=general,
     )
+
+
+def save_config(config: AppConfig, config_path: str | Path | None = None) -> Path:
+    """
+    Сохраняет конфигурацию приложения в INI-файл.
+
+    Args:
+        config: Объект конфигурации для записи.
+        config_path: Путь к config.ini. Если не указан, используется get_config_path().
+
+    Returns:
+        Путь к сохранённому файлу конфигурации.
+    """
+    if config_path is None:
+        config_path = get_config_path()
+
+    config_path = Path(config_path)
+    parser = ConfigParser()
+
+    parser["grafana"] = {
+        "url": config.grafana.url,
+        "width": config.grafana.width,
+        "height": config.grafana.height,
+        "timeout": config.grafana.timeout,
+        "timezone": config.grafana.timezone,
+        "org_id": config.grafana.org_id,
+        "tmp_dir": config.grafana.tmp_dir,
+        "dashboards_path": config.grafana.dashboards_path,
+    }
+
+    parser["confluence"] = {
+        "url": config.confluence.url,
+        "space_key": config.confluence.space_key,
+        "ssl_certificate_path": config.confluence.ssl_certificate_path,
+        "macro_id": config.confluence.macro_id,
+    }
+
+    parser["general"] = {
+        "report_html_template_path": config.general.report_html_template_path,
+        "qss_path": config.general.qss_path,
+    }
+
+    with open(config_path, "w", encoding="utf-8") as file:
+        parser.write(file)
+
+    return config_path

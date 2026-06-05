@@ -8,7 +8,7 @@ from pathlib import Path
 
 from PySide6.QtCore import QFileSystemWatcher, QTimer
 
-QSS_PATH = Path("C:/CODE/Git/python-autoreporter/data/styles.qss")
+QSS_PATH = Path("data/style.qss")
 QSS_RELOAD_DELAY_MS = 80
 
 

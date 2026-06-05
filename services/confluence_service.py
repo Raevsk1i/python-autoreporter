@@ -76,8 +76,8 @@ class ConfluenceService:
 
         return template.replace("{GRAPHICS_GRAFANA_REPLACE_IT}", result)
 
-    def create_page_with_body(self, html: str, title: str, parent_id: str) -> None:
-        self._client.create_page(
+    def create_page_with_body(self, html: str, title: str, parent_id: str):
+        return self._client.create_page(
             space=self._space_key,
             body=html,
             parent_id=parent_id,

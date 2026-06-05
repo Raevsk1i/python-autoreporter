@@ -26,7 +26,7 @@ def get_grafana_password() -> str | None:
     return keyring.get_password(SERVICE_NAME, "GRAFANA_PASSWORD")
 
 def set_grafana_token(token: str) -> None:
-    keyring.set_password(SERVICE_NAME, "GRAFANA_TOKEN", token)
+    keyring.set_password(SERVICE_NAME, "GRAFANA__API_TOKEN", token)
 
 def set_confluence_auth(username: str, token: str) -> None:
     keyring.set_password(SERVICE_NAME, "CONFLUENCE_USERNAME", username)

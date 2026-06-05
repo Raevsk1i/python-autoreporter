@@ -5,6 +5,7 @@ from configuration.app_config import load_config
 from services.confluence_service import ConfluenceService
 from services.grafana_service import GrafanaService, Dashboard, Panel
 import configuration.credentials as credentials
+from services.report_service import ReportService
 
 CONFIG = load_config()
 
@@ -21,25 +22,13 @@ def main():
         password="sds"
     )
 
-    grafana_service = GrafanaService(CONFIG.grafana)
-    confluence_service = ConfluenceService(CONFIG.confluence)
-    dashboards = grafana_service.load_dashboards()
-    dashboard: Dashboard = dashboards.get("leronet")
-    grafana_service.download_grafana_panel(
-        dashboard=dashboard,
+    report_service = ReportService(CONFIG)
+    report_service.create_report(
         from_time="2026.11.23 18:03:03",
         to_time="2026.11.23 18:03:03",
+        dashboard="leronet",
+        parent_id="232323"
     )
-
-    for panel in dashboard.panels:
-        confluence_service.upload_attachment(
-            panel=panel,
-            page_id="23232",
-            file_path=Path("tmp/grafana_panels/" + f"panel_{panel.panel_id}_{panel.panel_name}.png")
-        )
-
-    html_doc = confluence_service.build_html_page(dashboard.panels)
-    confluence_service.update_page(html_doc, "23232323", "srgdzrgdrgdr")
 
 if __name__ == "__main__":
     main()

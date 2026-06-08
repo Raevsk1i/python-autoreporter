@@ -23,9 +23,10 @@ class ReportWorker(QRunnable):
         dashboard: str,
         title: str,
         target_id: str,
+        signals: WorkerSignals,
     ) -> None:
         super().__init__()
-        self.signals = WorkerSignals()
+        self.signals = signals
         self._action = action
         self._report_service = report_service
         self._from_time = from_time

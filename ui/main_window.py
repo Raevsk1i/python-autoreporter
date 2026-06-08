@@ -34,7 +34,7 @@ from ui.widgets import (
     make_section_card,
     make_section_title,
 )
-from ui.worker import ReportWorker
+from ui.worker import ReportWorker, WorkerSignals
 
 
 TIME_FORMAT = "yyyy-MM-dd HH:mm:ss"
@@ -322,6 +322,7 @@ class MainWindow(QMainWindow):
             f"для дашборда «{dashboard}»..."
         )
 
+        signals = WorkerSignals(self)
         worker = ReportWorker(
             action=action,
             report_service=self._report_service,
@@ -330,18 +331,24 @@ class MainWindow(QMainWindow):
             dashboard=dashboard,
             title=title,
             target_id=target_id,
+            signals=signals,
         )
-        worker.signals.success.connect(self._on_report_success)
-        worker.signals.error.connect(self._on_report_error)
-        worker.signals.finished.connect(lambda: self._set_busy(False))
+        signals.success.connect(self._on_report_success)
+        signals.error.connect(self._on_report_error)
+        signals.finished.connect(self._on_report_finished)
         self._thread_pool.start(worker)
 
+    def _on_report_finished(self) -> None:
+        self._set_busy(False)
+
     def _on_report_success(self, message: str) -> None:
+        self._set_busy(False)
         self._append_log(message)
         self.statusBar().showMessage(message)
         QMessageBox.information(self, "Готово", message)
 
     def _on_report_error(self, message: str) -> None:
+        self._set_busy(False)
         self._append_log(f"Ошибка: {message}")
         self.statusBar().showMessage("Ошибка выполнения")
         QMessageBox.critical(self, "Ошибка", message)

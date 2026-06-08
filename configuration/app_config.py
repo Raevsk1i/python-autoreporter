@@ -22,6 +22,7 @@ class GrafanaConfig:
     tmp_dir: str
     dashboards_path: str
     async_enabled: bool
+    max_workers: str
 
 
 @dataclass(frozen=True)
@@ -33,6 +34,7 @@ class ConfluenceConfig:
     ssl_certificate_path: str
     macro_id: str
     async_enabled: bool
+    max_workers: str
 
 
 @dataclass(frozen=True)
@@ -41,7 +43,6 @@ class GeneralConfig:
 
     report_html_template_path: str
     qss_path: str
-    max_workers: str
 
 
 @dataclass(frozen=True)
@@ -116,6 +117,7 @@ def load_config(config_path: str | Path | None = None) -> AppConfig:
         raise RuntimeError(f"Не удалось прочитать конфиг: {config_path}")
 
     legacy_async = parser.getboolean("general", "async", fallback=False)
+    legacy_max_workers = parser.get("general", "max_workers", fallback="4")
 
     grafana = GrafanaConfig(
         url=parser.get("grafana", "url"),
@@ -127,6 +129,7 @@ def load_config(config_path: str | Path | None = None) -> AppConfig:
         tmp_dir=parser.get("grafana", "tmp_dir"),
         dashboards_path=parser.get("grafana", "dashboards_path"),
         async_enabled=parser.getboolean("grafana", "async", fallback=legacy_async),
+        max_workers=parser.get("grafana", "max_workers", fallback=legacy_max_workers),
     )
 
     confluence = ConfluenceConfig(
@@ -135,12 +138,12 @@ def load_config(config_path: str | Path | None = None) -> AppConfig:
         ssl_certificate_path=parser.get("confluence", "ssl_certificate_path"),
         macro_id=parser.get("confluence", "macro_id"),
         async_enabled=parser.getboolean("confluence", "async", fallback=legacy_async),
+        max_workers=parser.get("confluence", "max_workers", fallback=legacy_max_workers),
     )
 
     general = GeneralConfig(
         report_html_template_path=parser.get("general", "report_html_template_path"),
         qss_path=parser.get("general", "qss_path"),
-        max_workers=parser.get("general", "max_workers", fallback="4"),
     )
 
     return AppConfig(
@@ -177,6 +180,7 @@ def save_config(config: AppConfig, config_path: str | Path | None = None) -> Pat
         "tmp_dir": config.grafana.tmp_dir,
         "dashboards_path": config.grafana.dashboards_path,
         "async": str(config.grafana.async_enabled).lower(),
+        "max_workers": config.grafana.max_workers,
     }
 
     parser["confluence"] = {
@@ -185,12 +189,12 @@ def save_config(config: AppConfig, config_path: str | Path | None = None) -> Pat
         "ssl_certificate_path": config.confluence.ssl_certificate_path,
         "macro_id": config.confluence.macro_id,
         "async": str(config.confluence.async_enabled).lower(),
+        "max_workers": config.confluence.max_workers,
     }
 
     parser["general"] = {
         "report_html_template_path": config.general.report_html_template_path,
         "qss_path": config.general.qss_path,
-        "max_workers": config.general.max_workers,
     }
 
     with open(config_path, "w", encoding="utf-8") as file:

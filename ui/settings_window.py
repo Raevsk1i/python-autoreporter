@@ -111,6 +111,7 @@ class SettingsWindow(QDialog):
             "org_id": QLineEdit(),
             "tmp_dir": QLineEdit(),
             "dashboards_path": QLineEdit(),
+            "max_workers": QLineEdit(),
         }
 
         labels = {
@@ -122,6 +123,7 @@ class SettingsWindow(QDialog):
             "org_id": "Org ID",
             "tmp_dir": "Временная папка",
             "dashboards_path": "Путь к dashboards.json",
+            "max_workers": "Макс. потоков",
         }
 
         for key, label_text in labels.items():
@@ -148,6 +150,7 @@ class SettingsWindow(QDialog):
             "space_key": QLineEdit(),
             "ssl_certificate_path": QLineEdit(),
             "macro_id": QLineEdit(),
+            "max_workers": QLineEdit(),
         }
 
         labels = {
@@ -155,6 +158,7 @@ class SettingsWindow(QDialog):
             "space_key": "Ключ пространства",
             "ssl_certificate_path": "Путь к SSL-сертификату",
             "macro_id": "ID макроса expand",
+            "max_workers": "Макс. потоков",
         }
 
         for key, label_text in labels.items():
@@ -179,12 +183,10 @@ class SettingsWindow(QDialog):
         self._general_fields = {
             "report_html_template_path": QLineEdit(),
             "qss_path": QLineEdit(),
-            "max_workers": QLineEdit(),
         }
 
         form.addRow(make_form_label("Путь к HTML-шаблону"), self._general_fields["report_html_template_path"])
         form.addRow(make_form_label("Путь к QSS-стилям"), self._general_fields["qss_path"])
-        form.addRow(make_form_label("Макс. потоков"), self._general_fields["max_workers"])
 
         layout.addWidget(card)
         layout.addStretch()
@@ -242,6 +244,7 @@ class SettingsWindow(QDialog):
             "org_id": grafana.org_id,
             "tmp_dir": grafana.tmp_dir,
             "dashboards_path": grafana.dashboards_path,
+            "max_workers": grafana.max_workers,
         }
 
         for key, value in grafana_values.items():
@@ -253,6 +256,7 @@ class SettingsWindow(QDialog):
             "space_key": confluence.space_key,
             "ssl_certificate_path": confluence.ssl_certificate_path,
             "macro_id": confluence.macro_id,
+            "max_workers": confluence.max_workers,
         }
 
         for key, value in confluence_values.items():
@@ -263,7 +267,6 @@ class SettingsWindow(QDialog):
             general.report_html_template_path
         )
         self._general_fields["qss_path"].setText(general.qss_path)
-        self._general_fields["max_workers"].setText(general.max_workers)
 
         self._confluence_username.setText(credentials.get_confluence_username() or "")
         self._confluence_token.setText(credentials.get_confluence_token() or "")
@@ -309,7 +312,6 @@ class SettingsWindow(QDialog):
                 general=GeneralConfig(
                     report_html_template_path=self._general_fields["report_html_template_path"].text().strip(),
                     qss_path=self._general_fields["qss_path"].text().strip(),
-                    max_workers=self._general_fields["max_workers"].text().strip(),
                 ),
             )
             save_config(updated_config, self._config_path)

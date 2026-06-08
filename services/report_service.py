@@ -25,18 +25,22 @@ class ReportService:
         self._grafana_service = GrafanaService(
             self._config.grafana,
             parallel=self._config.grafana.async_enabled,
-            max_workers=self._get_max_workers(),
+            max_workers=self._parse_max_workers(
+                self._config.grafana.max_workers,
+                section="grafana",
+            ),
         )
         self._dashboards = self._grafana_service.load_dashboards()
 
-    def _get_max_workers(self) -> int:
-        """Возвращает максимальное число потоков из конфигурации."""
+    def _parse_max_workers(self, value: str, *, section: str) -> int:
+        """Возвращает максимальное число потоков из строкового значения конфигурации."""
         try:
-            return max(1, int(self._config.general.max_workers))
+            return max(1, int(value))
         except ValueError:
             self._log.warning(
-                "Некорректное значение max_workers: %s. Используется 4.",
-                self._config.general.max_workers,
+                "Некорректное значение max_workers в [%s]: %s. Используется 4.",
+                section,
+                value,
             )
             return 4
 
@@ -78,7 +82,10 @@ class ReportService:
                 self._upload_single_panel(panel, page_id)
             return
 
-        max_workers = self._get_max_workers()
+        max_workers = self._parse_max_workers(
+            self._config.confluence.max_workers,
+            section="confluence",
+        )
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = [
                 executor.submit(self._upload_single_panel, panel, page_id)

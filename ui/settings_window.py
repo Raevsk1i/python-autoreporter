@@ -127,6 +127,9 @@ class SettingsWindow(QDialog):
         for key, label_text in labels.items():
             form.addRow(make_form_label(label_text), self._grafana_fields[key])
 
+        self._grafana_async_checkbox = QCheckBox("Асинхронно (многопоточное скачивание графиков)")
+        form.addRow(make_form_label("Многопоточность"), self._grafana_async_checkbox)
+
         layout.addWidget(card)
         layout.addStretch()
         return make_scrollable(content)
@@ -157,6 +160,9 @@ class SettingsWindow(QDialog):
         for key, label_text in labels.items():
             form.addRow(make_form_label(label_text), self._confluence_fields[key])
 
+        self._confluence_async_checkbox = QCheckBox("Асинхронно (многопоточная загрузка вложений)")
+        form.addRow(make_form_label("Многопоточность"), self._confluence_async_checkbox)
+
         layout.addWidget(card)
         layout.addStretch()
         return make_scrollable(content)
@@ -175,11 +181,9 @@ class SettingsWindow(QDialog):
             "qss_path": QLineEdit(),
             "max_workers": QLineEdit(),
         }
-        self._async_checkbox = QCheckBox("Асинхронно (многопоточная загрузка графиков и вложений)")
 
         form.addRow(make_form_label("Путь к HTML-шаблону"), self._general_fields["report_html_template_path"])
         form.addRow(make_form_label("Путь к QSS-стилям"), self._general_fields["qss_path"])
-        form.addRow(make_form_label("Асинхронно"), self._async_checkbox)
         form.addRow(make_form_label("Макс. потоков"), self._general_fields["max_workers"])
 
         layout.addWidget(card)
@@ -242,6 +246,7 @@ class SettingsWindow(QDialog):
 
         for key, value in grafana_values.items():
             self._grafana_fields[key].setText(value)
+        self._grafana_async_checkbox.setChecked(grafana.async_enabled)
 
         confluence_values = {
             "url": confluence.url,
@@ -252,12 +257,12 @@ class SettingsWindow(QDialog):
 
         for key, value in confluence_values.items():
             self._confluence_fields[key].setText(value)
+        self._confluence_async_checkbox.setChecked(confluence.async_enabled)
 
         self._general_fields["report_html_template_path"].setText(
             general.report_html_template_path
         )
         self._general_fields["qss_path"].setText(general.qss_path)
-        self._async_checkbox.setChecked(general.async_enabled)
         self._general_fields["max_workers"].setText(general.max_workers)
 
         self._confluence_username.setText(credentials.get_confluence_username() or "")
@@ -293,14 +298,17 @@ class SettingsWindow(QDialog):
     def _save_settings(self) -> None:
         try:
             updated_config = AppConfig(
-                grafana=GrafanaConfig(**{key: field.text().strip() for key, field in self._grafana_fields.items()}),
+                grafana=GrafanaConfig(
+                    **{key: field.text().strip() for key, field in self._grafana_fields.items()},
+                    async_enabled=self._grafana_async_checkbox.isChecked(),
+                ),
                 confluence=ConfluenceConfig(
-                    **{key: field.text().strip() for key, field in self._confluence_fields.items()}
+                    **{key: field.text().strip() for key, field in self._confluence_fields.items()},
+                    async_enabled=self._confluence_async_checkbox.isChecked(),
                 ),
                 general=GeneralConfig(
                     report_html_template_path=self._general_fields["report_html_template_path"].text().strip(),
                     qss_path=self._general_fields["qss_path"].text().strip(),
-                    async_enabled=self._async_checkbox.isChecked(),
                     max_workers=self._general_fields["max_workers"].text().strip(),
                 ),
             )

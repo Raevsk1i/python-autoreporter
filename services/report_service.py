@@ -24,7 +24,7 @@ class ReportService:
         self._confluence_service = ConfluenceService(self._config.confluence)
         self._grafana_service = GrafanaService(
             self._config.grafana,
-            parallel=self._config.general.async_enabled,
+            parallel=self._config.grafana.async_enabled,
             max_workers=self._get_max_workers(),
         )
         self._dashboards = self._grafana_service.load_dashboards()
@@ -73,7 +73,7 @@ class ReportService:
 
     def _upload_panels(self, panels, page_id: str) -> None:
         """Загружает все PNG-файлы панелей как вложения на страницу Confluence."""
-        if not self._config.general.async_enabled or len(panels) <= 1:
+        if not self._config.confluence.async_enabled or len(panels) <= 1:
             for panel in panels:
                 self._upload_single_panel(panel, page_id)
             return

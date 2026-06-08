@@ -22,12 +22,15 @@ from PySide6.QtWidgets import (
 )
 
 from configuration.app_config import AppConfig, load_config
+from configuration.app_info import APP_NAME, CREDIT_SHORT
 from services.report_service import ReportService
+from ui.about_dialog import AboutDialog
 from ui.dashboards_window import DashboardsWindow
 from ui.settings_window import SettingsWindow
 from ui.theme_manager import Theme, ThemeManager
 from ui.widgets import (
     make_button_row,
+    make_credit_label,
     make_form_label,
     make_hint_label,
     make_scrollable,
@@ -50,7 +53,7 @@ class MainWindow(QMainWindow):
         self._settings_window: SettingsWindow | None = None
         self._dashboards_window: DashboardsWindow | None = None
 
-        self.setWindowTitle("python-autoreporter")
+        self.setWindowTitle(APP_NAME)
         self.setMinimumSize(760, 680)
         self.resize(860, 760)
 
@@ -85,10 +88,16 @@ class MainWindow(QMainWindow):
         header_row.addWidget(make_section_title("Формирование отчёта"))
         header_row.addStretch()
 
+        about_button = QPushButton("О программе")
+        about_button.setObjectName("ghostButton")
+        about_button.clicked.connect(self._open_about)
+
         self._theme_button = QPushButton()
         self._theme_button.setObjectName("ghostButton")
         self._theme_button.clicked.connect(self._toggle_theme)
         self._update_theme_button_text()
+
+        header_row.addWidget(about_button)
         header_row.addWidget(self._theme_button)
         root.addLayout(header_row)
 
@@ -193,6 +202,7 @@ class MainWindow(QMainWindow):
         root.addWidget(self._progress_bar)
 
         self.setStatusBar(QStatusBar())
+        self.statusBar().addPermanentWidget(make_credit_label(CREDIT_SHORT))
         self.statusBar().showMessage("Готово")
 
     def _update_theme_button_text(self) -> None:
@@ -204,6 +214,9 @@ class MainWindow(QMainWindow):
     def _toggle_theme(self) -> None:
         self._theme_manager.toggle()
         self._update_theme_button_text()
+
+    def _open_about(self) -> None:
+        AboutDialog(self).exec()
 
     def _update_mode_fields(self) -> None:
         create_mode = self._create_mode_radio.isChecked()
@@ -217,6 +230,7 @@ class MainWindow(QMainWindow):
         if self._settings_window is None:
             self._settings_window = SettingsWindow(self)
             self._settings_window.config_saved.connect(self._on_config_saved)
+            self._settings_window.all_parameters_reset.connect(self._on_all_parameters_reset)
 
         self._settings_window.show()
         self._settings_window.raise_()
@@ -249,6 +263,11 @@ class MainWindow(QMainWindow):
             self._dashboards_window.update_config(self._config)
 
         self._append_log("Конфигурация обновлена.")
+
+    def _on_all_parameters_reset(self) -> None:
+        self._theme_manager.reset()
+        self._update_theme_button_text()
+        self._append_log("Все параметры сброшены к значениям по умолчанию.")
 
     def _refresh_dashboards(self) -> None:
         if self._report_service is None:
@@ -366,8 +385,8 @@ class MainWindow(QMainWindow):
 def run_application() -> int:
     """Создаёт QApplication, применяет тему и запускает главное окно."""
     app = QApplication([])
-    app.setApplicationName("python-autoreporter")
-    app.setOrganizationName("python-autoreporter")
+    app.setApplicationName(APP_NAME)
+    app.setOrganizationName(APP_NAME)
 
     theme_manager = ThemeManager(app)
     theme_manager.apply()

@@ -75,6 +75,13 @@ def make_hint_label(text: str) -> QLabel:
     return label
 
 
+def make_credit_label(text: str) -> QLabel:
+    """Создаёт метку с информацией об авторе."""
+    label = QLabel(text)
+    label.setObjectName("creditLabel")
+    return label
+
+
 def make_labeled_input(
     label_text: str,
     placeholder: str = "",

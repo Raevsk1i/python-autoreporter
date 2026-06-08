@@ -19,11 +19,14 @@ from PySide6.QtWidgets import (
 )
 
 import configuration.credentials as credentials
+from configuration.app_info import CREDIT_SHORT
 from configuration.app_config import (
     AppConfig,
     ConfluenceConfig,
     GeneralConfig,
     GrafanaConfig,
+    clear_config_path,
+    default_config,
     get_config_path,
     load_config,
     save_config,
@@ -31,6 +34,7 @@ from configuration.app_config import (
 )
 from ui.widgets import (
     make_button_row,
+    make_credit_label,
     make_form_label,
     make_hint_label,
     make_scrollable,
@@ -43,6 +47,7 @@ class SettingsWindow(QDialog):
     """Редактирование config.ini и учётных данных в keyring."""
 
     config_saved = Signal()
+    all_parameters_reset = Signal()
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
@@ -78,10 +83,15 @@ class SettingsWindow(QDialog):
         self._config_path_label = QLabel(f"Путь: {self._config_path}")
         self._config_path_label.setObjectName("hintLabel")
         root.addWidget(self._config_path_label)
+        root.addWidget(make_credit_label(CREDIT_SHORT))
 
         browse_button = QPushButton("Выбрать другой config.ini")
         browse_button.setObjectName("ghostButton")
         browse_button.clicked.connect(self._browse_config_path)
+
+        reset_button = QPushButton("Сбросить все параметры")
+        reset_button.setObjectName("ghostButton")
+        reset_button.clicked.connect(self._reset_all_settings)
 
         save_button = QPushButton("Сохранить")
         save_button.setObjectName("primaryButton")
@@ -90,7 +100,7 @@ class SettingsWindow(QDialog):
         close_button = QPushButton("Закрыть")
         close_button.clicked.connect(self.close)
 
-        button_row = make_button_row(browse_button, close_button, save_button)
+        button_row = make_button_row(browse_button, reset_button, close_button, save_button)
         root.addLayout(button_row)
 
     def _build_grafana_tab(self) -> QWidget:
@@ -273,6 +283,43 @@ class SettingsWindow(QDialog):
         self._grafana_username.setText(credentials.get_grafana_username() or "")
         self._grafana_password.setText(credentials.get_grafana_password() or "")
         self._grafana_token.setText(credentials.get_grafana_token() or "")
+
+    def _reset_all_settings(self) -> None:
+        reply = QMessageBox.question(
+            self,
+            "Сброс параметров",
+            "Сбросить все настройки к значениям по умолчанию?\n\n"
+            "Будут восстановлены параметры config.ini, удалены учётные данные "
+            "и пользовательский путь к файлу конфигурации.",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+
+        if reply != QMessageBox.StandardButton.Yes:
+            return
+
+        try:
+            clear_config_path()
+            credentials.clear_all_credentials()
+
+            local_config = Path("config.ini")
+            default = default_config()
+            save_config(default, local_config)
+
+            self._config_path = local_config.resolve()
+            self._config = default
+            self._config_path_label.setText(f"Путь: {self._config_path}")
+            self._load_values()
+
+            self.all_parameters_reset.emit()
+            self.config_saved.emit()
+            QMessageBox.information(
+                self,
+                "Сброшено",
+                "Все параметры восстановлены по умолчанию.",
+            )
+        except Exception as error:
+            QMessageBox.critical(self, "Ошибка сброса", str(error))
 
     def _browse_config_path(self) -> None:
         selected, _ = QFileDialog.getOpenFileName(

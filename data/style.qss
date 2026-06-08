@@ -47,6 +47,11 @@ QLabel#hintLabel {
     font-size: 12px;
 }
 
+QLabel#creditLabel {
+    color: #8a829c;
+    font-size: 11px;
+}
+
 QLabel#formLabel {
     color: #6b6380;
     font-weight: 500;
@@ -499,6 +504,11 @@ QLabel#sectionTitle {
 QLabel#hintLabel {
     color: #94a3b8;
     font-size: 12px;
+}
+
+QLabel#creditLabel {
+    color: #94a3b8;
+    font-size: 11px;
 }
 
 QLabel#formLabel {

@@ -123,3 +123,7 @@ class ThemeManager:
         new_theme = Theme.LIGHT if self._theme == Theme.DARK else Theme.DARK
         self.apply(new_theme)
         return new_theme
+
+    def reset(self) -> None:
+        """Сбрасывает тему оформления к значению по умолчанию."""
+        self.apply(Theme.LIGHT)

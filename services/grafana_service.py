@@ -2,6 +2,7 @@
 
 import json
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -42,12 +43,20 @@ class Dashboard:
 class GrafanaService:
     """Клиент для работы с API рендеринга Grafana."""
 
-    def __init__(self, config: GrafanaConfig) -> None:
+    def __init__(
+        self,
+        config: GrafanaConfig,
+        *,
+        parallel: bool = False,
+        max_workers: int = 4,
+    ) -> None:
         """
         Инициализирует сервис параметрами из конфигурации.
 
         Args:
             config: Секция настроек Grafana из AppConfig.
+            parallel: Включить многопоточное скачивание панелей.
+            max_workers: Максимальное число потоков при параллельном скачивании.
         """
         logging.basicConfig(
             level=logging.INFO,
@@ -64,6 +73,8 @@ class GrafanaService:
         self._org_id = config.org_id
         self._tmp_dir = Path(config.tmp_dir)
         self._dashboards_path = Path(config.dashboards_path)
+        self._parallel = parallel
+        self._max_workers = max(1, max_workers)
 
     def load_dashboards(self) -> dict[str, Dashboard]:
         """
@@ -160,6 +171,28 @@ class GrafanaService:
             for chunk in response.iter_content(chunk_size=DOWNLOAD_CHUNK_SIZE):
                 file.write(chunk)
 
+    def _download_single_panel(
+        self,
+        dashboard: Dashboard,
+        panel: Panel,
+        from_time_ms: int,
+        to_time_ms: int,
+    ) -> None:
+        """Скачивает одну панель дашборда и сохраняет её на диск."""
+        filename = f"panel_{panel.panel_id}_{panel.panel_name}.png"
+        self._log.info("Скачивание панели под ID %s...", panel.panel_id)
+
+        url = self._build_render_url(
+            dashboard=dashboard,
+            panel_id=panel.panel_id,
+            from_time_ms=from_time_ms,
+            to_time_ms=to_time_ms,
+        )
+
+        response = self._download_panel_image(url)
+        response.raise_for_status()
+        self._save_panel_to_disk(response, filename)
+
     def download_grafana_panel(
         self,
         dashboard: Dashboard,
@@ -170,6 +203,7 @@ class GrafanaService:
         Скачивает все панели дашборда в виде PNG-изображений.
 
         Файлы сохраняются во временную директорию, указанную в конфигурации.
+        При включённом многопоточном режиме панели скачиваются параллельно.
 
         Args:
             dashboard: Дашборд с перечнем панелей для скачивания.
@@ -179,17 +213,27 @@ class GrafanaService:
         from_time_ms = self._convert_time_to_ms(from_time)
         to_time_ms = self._convert_time_to_ms(to_time)
 
-        for panel in dashboard.panels:
-            filename = f"panel_{panel.panel_id}_{panel.panel_name}.png"
-            self._log.info("Скачивание панели под ID %s...", panel.panel_id)
+        if not self._parallel or len(dashboard.panels) <= 1:
+            for panel in dashboard.panels:
+                self._download_single_panel(
+                    dashboard=dashboard,
+                    panel=panel,
+                    from_time_ms=from_time_ms,
+                    to_time_ms=to_time_ms,
+                )
+            return
 
-            url = self._build_render_url(
-                dashboard=dashboard,
-                panel_id=panel.panel_id,
-                from_time_ms=from_time_ms,
-                to_time_ms=to_time_ms,
-            )
+        with ThreadPoolExecutor(max_workers=self._max_workers) as executor:
+            futures = [
+                executor.submit(
+                    self._download_single_panel,
+                    dashboard,
+                    panel,
+                    from_time_ms,
+                    to_time_ms,
+                )
+                for panel in dashboard.panels
+            ]
 
-            response = self._download_panel_image(url)
-            response.raise_for_status()
-            self._save_panel_to_disk(response, filename)
+            for future in as_completed(futures):
+                future.result()

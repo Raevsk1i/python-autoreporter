@@ -4,6 +4,7 @@ from pathlib import Path
 
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
+    QCheckBox,
     QDialog,
     QFileDialog,
     QFormLayout,
@@ -110,6 +111,7 @@ class SettingsWindow(QDialog):
             "org_id": QLineEdit(),
             "tmp_dir": QLineEdit(),
             "dashboards_path": QLineEdit(),
+            "max_workers": QLineEdit(),
         }
 
         labels = {
@@ -121,10 +123,14 @@ class SettingsWindow(QDialog):
             "org_id": "Org ID",
             "tmp_dir": "Временная папка",
             "dashboards_path": "Путь к dashboards.json",
+            "max_workers": "Макс. потоков",
         }
 
         for key, label_text in labels.items():
             form.addRow(make_form_label(label_text), self._grafana_fields[key])
+
+        self._grafana_async_checkbox = QCheckBox("Асинхронно (многопоточное скачивание графиков)")
+        form.addRow(make_form_label("Многопоточность"), self._grafana_async_checkbox)
 
         layout.addWidget(card)
         layout.addStretch()
@@ -144,6 +150,7 @@ class SettingsWindow(QDialog):
             "space_key": QLineEdit(),
             "ssl_certificate_path": QLineEdit(),
             "macro_id": QLineEdit(),
+            "max_workers": QLineEdit(),
         }
 
         labels = {
@@ -151,10 +158,14 @@ class SettingsWindow(QDialog):
             "space_key": "Ключ пространства",
             "ssl_certificate_path": "Путь к SSL-сертификату",
             "macro_id": "ID макроса expand",
+            "max_workers": "Макс. потоков",
         }
 
         for key, label_text in labels.items():
             form.addRow(make_form_label(label_text), self._confluence_fields[key])
+
+        self._confluence_async_checkbox = QCheckBox("Асинхронно (многопоточная загрузка вложений)")
+        form.addRow(make_form_label("Многопоточность"), self._confluence_async_checkbox)
 
         layout.addWidget(card)
         layout.addStretch()
@@ -233,20 +244,24 @@ class SettingsWindow(QDialog):
             "org_id": grafana.org_id,
             "tmp_dir": grafana.tmp_dir,
             "dashboards_path": grafana.dashboards_path,
+            "max_workers": grafana.max_workers,
         }
 
         for key, value in grafana_values.items():
             self._grafana_fields[key].setText(value)
+        self._grafana_async_checkbox.setChecked(grafana.async_enabled)
 
         confluence_values = {
             "url": confluence.url,
             "space_key": confluence.space_key,
             "ssl_certificate_path": confluence.ssl_certificate_path,
             "macro_id": confluence.macro_id,
+            "max_workers": confluence.max_workers,
         }
 
         for key, value in confluence_values.items():
             self._confluence_fields[key].setText(value)
+        self._confluence_async_checkbox.setChecked(confluence.async_enabled)
 
         self._general_fields["report_html_template_path"].setText(
             general.report_html_template_path
@@ -286,12 +301,17 @@ class SettingsWindow(QDialog):
     def _save_settings(self) -> None:
         try:
             updated_config = AppConfig(
-                grafana=GrafanaConfig(**{key: field.text().strip() for key, field in self._grafana_fields.items()}),
+                grafana=GrafanaConfig(
+                    **{key: field.text().strip() for key, field in self._grafana_fields.items()},
+                    async_enabled=self._grafana_async_checkbox.isChecked(),
+                ),
                 confluence=ConfluenceConfig(
-                    **{key: field.text().strip() for key, field in self._confluence_fields.items()}
+                    **{key: field.text().strip() for key, field in self._confluence_fields.items()},
+                    async_enabled=self._confluence_async_checkbox.isChecked(),
                 ),
                 general=GeneralConfig(
-                    **{key: field.text().strip() for key, field in self._general_fields.items()}
+                    report_html_template_path=self._general_fields["report_html_template_path"].text().strip(),
+                    qss_path=self._general_fields["qss_path"].text().strip(),
                 ),
             )
             save_config(updated_config, self._config_path)

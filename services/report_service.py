@@ -1,6 +1,7 @@
 """Сервис оркестрации создания и обновления отчётов Grafana → Confluence."""
 
 import logging
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from configuration.app_config import AppConfig
@@ -21,8 +22,23 @@ class ReportService:
         self._log = logging.getLogger(__name__)
         self._config = config
         self._confluence_service = ConfluenceService(self._config.confluence)
-        self._grafana_service = GrafanaService(self._config.grafana)
+        self._grafana_service = GrafanaService(
+            self._config.grafana,
+            parallel=self._config.general.async_enabled,
+            max_workers=self._get_max_workers(),
+        )
         self._dashboards = self._grafana_service.load_dashboards()
+
+    def _get_max_workers(self) -> int:
+        """Возвращает максимальное число потоков из конфигурации."""
+        try:
+            return max(1, int(self._config.general.max_workers))
+        except ValueError:
+            self._log.warning(
+                "Некорректное значение max_workers: %s. Используется 4.",
+                self._config.general.max_workers,
+            )
+            return 4
 
     def _get_dashboard(self, dashboard_name: str) -> Dashboard:
         """
@@ -47,14 +63,30 @@ class ReportService:
         filename = f"panel_{panel_id}_{panel_name}.png"
         return Path(self._config.grafana.tmp_dir) / filename
 
+    def _upload_single_panel(self, panel, page_id: str) -> None:
+        """Загружает PNG-файл одной панели как вложение на страницу Confluence."""
+        self._confluence_service.upload_attachment(
+            panel=panel,
+            page_id=page_id,
+            file_path=self._panel_file_path(panel.panel_id, panel.panel_name),
+        )
+
     def _upload_panels(self, panels, page_id: str) -> None:
         """Загружает все PNG-файлы панелей как вложения на страницу Confluence."""
-        for panel in panels:
-            self._confluence_service.upload_attachment(
-                panel=panel,
-                page_id=page_id,
-                file_path=self._panel_file_path(panel.panel_id, panel.panel_name),
-            )
+        if not self._config.general.async_enabled or len(panels) <= 1:
+            for panel in panels:
+                self._upload_single_panel(panel, page_id)
+            return
+
+        max_workers = self._get_max_workers()
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = [
+                executor.submit(self._upload_single_panel, panel, page_id)
+                for panel in panels
+            ]
+
+            for future in as_completed(futures):
+                future.result()
 
     def create_report(
         self,

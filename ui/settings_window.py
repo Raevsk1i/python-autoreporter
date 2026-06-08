@@ -4,6 +4,7 @@ from pathlib import Path
 
 from PySide6.QtCore import Signal
 from PySide6.QtWidgets import (
+    QCheckBox,
     QDialog,
     QFileDialog,
     QFormLayout,
@@ -172,10 +173,14 @@ class SettingsWindow(QDialog):
         self._general_fields = {
             "report_html_template_path": QLineEdit(),
             "qss_path": QLineEdit(),
+            "max_workers": QLineEdit(),
         }
+        self._async_checkbox = QCheckBox("Асинхронно (многопоточная загрузка графиков и вложений)")
 
         form.addRow(make_form_label("Путь к HTML-шаблону"), self._general_fields["report_html_template_path"])
         form.addRow(make_form_label("Путь к QSS-стилям"), self._general_fields["qss_path"])
+        form.addRow(make_form_label("Асинхронно"), self._async_checkbox)
+        form.addRow(make_form_label("Макс. потоков"), self._general_fields["max_workers"])
 
         layout.addWidget(card)
         layout.addStretch()
@@ -252,6 +257,8 @@ class SettingsWindow(QDialog):
             general.report_html_template_path
         )
         self._general_fields["qss_path"].setText(general.qss_path)
+        self._async_checkbox.setChecked(general.async_enabled)
+        self._general_fields["max_workers"].setText(general.max_workers)
 
         self._confluence_username.setText(credentials.get_confluence_username() or "")
         self._confluence_token.setText(credentials.get_confluence_token() or "")
@@ -291,7 +298,10 @@ class SettingsWindow(QDialog):
                     **{key: field.text().strip() for key, field in self._confluence_fields.items()}
                 ),
                 general=GeneralConfig(
-                    **{key: field.text().strip() for key, field in self._general_fields.items()}
+                    report_html_template_path=self._general_fields["report_html_template_path"].text().strip(),
+                    qss_path=self._general_fields["qss_path"].text().strip(),
+                    async_enabled=self._async_checkbox.isChecked(),
+                    max_workers=self._general_fields["max_workers"].text().strip(),
                 ),
             )
             save_config(updated_config, self._config_path)

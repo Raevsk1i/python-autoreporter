@@ -39,6 +39,8 @@ class GeneralConfig:
 
     report_html_template_path: str
     qss_path: str
+    async_enabled: bool
+    max_workers: str
 
 
 @dataclass(frozen=True)
@@ -133,6 +135,8 @@ def load_config(config_path: str | Path | None = None) -> AppConfig:
     general = GeneralConfig(
         report_html_template_path=parser.get("general", "report_html_template_path"),
         qss_path=parser.get("general", "qss_path"),
+        async_enabled=parser.getboolean("general", "async", fallback=False),
+        max_workers=parser.get("general", "max_workers", fallback="4"),
     )
 
     return AppConfig(
@@ -180,6 +184,8 @@ def save_config(config: AppConfig, config_path: str | Path | None = None) -> Pat
     parser["general"] = {
         "report_html_template_path": config.general.report_html_template_path,
         "qss_path": config.general.qss_path,
+        "async": str(config.general.async_enabled).lower(),
+        "max_workers": config.general.max_workers,
     }
 
     with open(config_path, "w", encoding="utf-8") as file:

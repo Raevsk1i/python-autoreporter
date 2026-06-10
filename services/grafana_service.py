@@ -13,9 +13,9 @@ from requests.auth import HTTPBasicAuth
 
 from configuration.app_config import GrafanaConfig
 from configuration.credentials import (
-    get_grafana_password,
-    get_grafana_token,
-    get_grafana_username,
+    get_grafana_password_for_dashboard,
+    get_grafana_token_for_dashboard,
+    get_grafana_username_for_dashboard,
 )
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -140,13 +140,13 @@ class GrafanaService:
             f"&tz={self._timezone}"
         )
 
-    def _download_panel_image(self, url: str) -> requests.Response:
+    def _download_panel_image(self, url: str, dashboard: Dashboard) -> requests.Response:
         """
         Выполняет HTTP-запрос на скачивание изображения панели.
 
-        Использует Bearer-токен, если он задан, иначе — Basic Auth.
+        Использует Bearer-токен дашборда, если он задан, иначе — Basic Auth.
         """
-        token = get_grafana_token()
+        token = get_grafana_token_for_dashboard(dashboard.name)
 
         if token is not None:
             headers = {"Authorization": f"Bearer {token}"}
@@ -160,7 +160,10 @@ class GrafanaService:
         return requests.get(
             url=url,
             timeout=self._timeout,
-            auth=HTTPBasicAuth(get_grafana_username(), get_grafana_password()),
+            auth=HTTPBasicAuth(
+                get_grafana_username_for_dashboard(dashboard.name),
+                get_grafana_password_for_dashboard(dashboard.name),
+            ),
             stream=True,
         )
 
@@ -191,7 +194,7 @@ class GrafanaService:
             to_time_ms=to_time_ms,
         )
 
-        response = self._download_panel_image(url)
+        response = self._download_panel_image(url, dashboard)
         response.raise_for_status()
         self._save_panel_to_disk(response, filename)
 

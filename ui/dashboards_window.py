@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (
 
 from configuration.app_config import AppConfig
 from configuration.app_info import CREDIT_SHORT
+import configuration.credentials as credentials
 from ui.widgets import (
     make_button_row,
     make_credit_label,
@@ -122,11 +123,30 @@ class DashboardsWindow(QDialog):
         details_form.addRow(make_form_label("Dashboard UID"), self._dashboard_uid_field)
         details_form.addRow(make_form_label("Dashboard Slug"), self._dashboard_slug_field)
 
+        self._grafana_username_field = QLineEdit()
+        self._grafana_password_field = QLineEdit()
+        self._grafana_password_field.setEchoMode(QLineEdit.EchoMode.Password)
+        self._grafana_token_field = QLineEdit()
+        self._grafana_token_field.setEchoMode(QLineEdit.EchoMode.Password)
+
+        details_form.addRow(make_form_label("Имя пользователя"), self._grafana_username_field)
+        details_form.addRow(make_form_label("Пароль"), self._grafana_password_field)
+        details_form.addRow(
+            make_form_label("API-токен (приоритетнее пароля)"),
+            self._grafana_token_field,
+        )
+
         apply_details_button = QPushButton("Применить параметры дашборда")
         apply_details_button.clicked.connect(self._apply_dashboard_details)
         details_form.addRow("", apply_details_button)
 
         layout.addWidget(details_card)
+        layout.addWidget(
+            make_hint_label(
+                "Учётные данные Grafana хранятся в системном keyring отдельно для каждого дашборда. "
+                "Пустые поля при применении не перезаписывают существующие значения."
+            )
+        )
 
         panels_card, panels_layout = make_section_card("Панели")
 
@@ -197,6 +217,15 @@ class DashboardsWindow(QDialog):
         self._grafana_url_field.setText(dashboard.get("grafana_url", ""))
         self._dashboard_uid_field.setText(dashboard.get("dashboard_uid", ""))
         self._dashboard_slug_field.setText(dashboard.get("dashboard_slug", ""))
+        self._grafana_username_field.setText(
+            credentials.get_grafana_username_for_dashboard(key) or ""
+        )
+        self._grafana_password_field.setText(
+            credentials.get_grafana_password_for_dashboard(key) or ""
+        )
+        self._grafana_token_field.setText(
+            credentials.get_grafana_token_for_dashboard(key) or ""
+        )
 
         self._panels_list.clear()
         for panel in dashboard.get("panels", []):
@@ -209,6 +238,9 @@ class DashboardsWindow(QDialog):
         self._grafana_url_field.clear()
         self._dashboard_uid_field.clear()
         self._dashboard_slug_field.clear()
+        self._grafana_username_field.clear()
+        self._grafana_password_field.clear()
+        self._grafana_token_field.clear()
         self._panels_list.clear()
 
     def _add_dashboard(self) -> None:
@@ -249,6 +281,7 @@ class DashboardsWindow(QDialog):
         if answer != QMessageBox.StandardButton.Yes:
             return
 
+        credentials.clear_grafana_dashboard_credentials(key)
         del self._data[key]
         self._refresh_dashboard_list()
 
@@ -279,7 +312,26 @@ class DashboardsWindow(QDialog):
         dashboard["dashboard_uid"] = uid
         dashboard["dashboard_slug"] = slug
         self._data[new_key] = dashboard
+
+        if new_key != old_key:
+            credentials.rename_grafana_dashboard_credentials(old_key, new_key)
+
+        self._save_dashboard_credentials(new_key)
         self._refresh_dashboard_list(select_key=new_key)
+
+    def _save_dashboard_credentials(self, dashboard_key: str) -> None:
+        grafana_username = self._grafana_username_field.text().strip()
+        grafana_password = self._grafana_password_field.text().strip()
+        if grafana_username and grafana_password:
+            credentials.set_grafana_dashboard_basicauth(
+                dashboard_key,
+                grafana_username,
+                grafana_password,
+            )
+
+        grafana_token = self._grafana_token_field.text().strip()
+        if grafana_token:
+            credentials.set_grafana_dashboard_token(dashboard_key, grafana_token)
 
     def _add_panel(self) -> None:
         key = self._current_dashboard_key()

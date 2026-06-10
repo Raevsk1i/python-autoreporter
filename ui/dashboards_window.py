@@ -113,10 +113,12 @@ class DashboardsWindow(QDialog):
         details_layout.addLayout(details_form)
 
         self._dashboard_key_field = QLineEdit()
+        self._grafana_url_field = QLineEdit()
         self._dashboard_uid_field = QLineEdit()
         self._dashboard_slug_field = QLineEdit()
 
         details_form.addRow(make_form_label("Ключ"), self._dashboard_key_field)
+        details_form.addRow(make_form_label("URL Grafana"), self._grafana_url_field)
         details_form.addRow(make_form_label("Dashboard UID"), self._dashboard_uid_field)
         details_form.addRow(make_form_label("Dashboard Slug"), self._dashboard_slug_field)
 
@@ -192,6 +194,7 @@ class DashboardsWindow(QDialog):
         dashboard = self._data.get(key, {})
 
         self._dashboard_key_field.setText(key)
+        self._grafana_url_field.setText(dashboard.get("grafana_url", ""))
         self._dashboard_uid_field.setText(dashboard.get("dashboard_uid", ""))
         self._dashboard_slug_field.setText(dashboard.get("dashboard_slug", ""))
 
@@ -203,6 +206,7 @@ class DashboardsWindow(QDialog):
 
     def _clear_panel_fields(self) -> None:
         self._dashboard_key_field.clear()
+        self._grafana_url_field.clear()
         self._dashboard_uid_field.clear()
         self._dashboard_slug_field.clear()
         self._panels_list.clear()
@@ -223,6 +227,7 @@ class DashboardsWindow(QDialog):
             return
 
         self._data[key] = {
+            "grafana_url": "",
             "dashboard_uid": "",
             "dashboard_slug": "",
             "panels": [],
@@ -253,6 +258,7 @@ class DashboardsWindow(QDialog):
             return
 
         new_key = self._dashboard_key_field.text().strip()
+        grafana_url = self._grafana_url_field.text().strip()
         uid = self._dashboard_uid_field.text().strip()
         slug = self._dashboard_slug_field.text().strip()
 
@@ -260,11 +266,16 @@ class DashboardsWindow(QDialog):
             QMessageBox.warning(self, "Проверка", "Ключ дашборда не может быть пустым.")
             return
 
+        if not grafana_url:
+            QMessageBox.warning(self, "Проверка", "URL Grafana не может быть пустым.")
+            return
+
         if new_key != old_key and new_key in self._data:
             QMessageBox.warning(self, "Проверка", "Дашборд с таким ключом уже существует.")
             return
 
         dashboard = self._data.pop(old_key)
+        dashboard["grafana_url"] = grafana_url
         dashboard["dashboard_uid"] = uid
         dashboard["dashboard_slug"] = slug
         self._data[new_key] = dashboard

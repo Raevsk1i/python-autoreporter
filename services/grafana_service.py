@@ -35,6 +35,7 @@ class Dashboard:
     """Дашборд Grafana со списком панелей."""
 
     name: str
+    grafana_url: str
     dashboard_uid: str
     dashboard_slug: str
     panels: list[Panel]
@@ -65,7 +66,6 @@ class GrafanaService:
 
         self._config = config
         self._log = logging.getLogger("GrafanaService")
-        self._grafana_url = config.url
         self._timezone = config.timezone
         self._width = config.width
         self._height = config.height
@@ -99,6 +99,7 @@ class GrafanaService:
 
             dashboards[dashboard_name] = Dashboard(
                 name=dashboard_name,
+                grafana_url=dashboard_data["grafana_url"],
                 dashboard_uid=dashboard_data["dashboard_uid"],
                 dashboard_slug=dashboard_data["dashboard_slug"],
                 panels=panels,
@@ -128,8 +129,9 @@ class GrafanaService:
         to_time_ms: int,
     ) -> str:
         """Формирует URL для рендеринга отдельной панели Grafana."""
+        grafana_url = dashboard.grafana_url.rstrip("/")
         return (
-            f"{self._grafana_url}/render/d-solo/"
+            f"{grafana_url}/render/d-solo/"
             f"{dashboard.dashboard_uid}/{dashboard.dashboard_slug}"
             f"?OrgId={self._org_id}"
             f"&from={from_time_ms}&to={to_time_ms}"

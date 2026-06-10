@@ -13,7 +13,6 @@ from configuration.credentials import SERVICE_NAME
 class GrafanaConfig:
     """Параметры подключения к Grafana и рендеринга панелей."""
 
-    url: str
     width: str
     height: str
     timeout: str
@@ -58,7 +57,6 @@ def default_config() -> AppConfig:
     """Возвращает конфигурацию приложения по умолчанию."""
     return AppConfig(
         grafana=GrafanaConfig(
-            url="",
             width="",
             height="",
             timeout="30",
@@ -158,7 +156,6 @@ def load_config(config_path: str | Path | None = None) -> AppConfig:
     legacy_max_workers = parser.get("general", "max_workers", fallback="4")
 
     grafana = GrafanaConfig(
-        url=parser.get("grafana", "url"),
         width=parser.get("grafana", "width"),
         height=parser.get("grafana", "height"),
         timeout=parser.get("grafana", "timeout"),
@@ -209,7 +206,6 @@ def save_config(config: AppConfig, config_path: str | Path | None = None) -> Pat
     parser = ConfigParser()
 
     parser["grafana"] = {
-        "url": config.grafana.url,
         "width": config.grafana.width,
         "height": config.grafana.height,
         "timeout": config.grafana.timeout,

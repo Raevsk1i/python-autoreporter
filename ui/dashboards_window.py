@@ -2,7 +2,7 @@
 
 from pathlib import Path
 
-from PySide6.QtCore import Signal
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QDialog,
     QFormLayout,
@@ -189,7 +189,7 @@ class DashboardsWindow(QDialog):
         self._dashboard_list.blockSignals(False)
 
         if select_key and select_key in self._data:
-            items = self._dashboard_list.findItems(select_key, 0)
+            items = self._dashboard_list.findItems(select_key, Qt.MatchFlag.MatchExactly)
             if items:
                 self._dashboard_list.setCurrentItem(items[0])
                 return

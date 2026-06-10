@@ -213,25 +213,12 @@ class SettingsWindow(QDialog):
         confluence_form.addRow(make_form_label("Имя пользователя"), self._confluence_username)
         confluence_form.addRow(make_form_label("API-токен"), self._confluence_token)
 
-        grafana_card, grafana_layout = make_section_card("Grafana")
-        grafana_form = QFormLayout()
-        grafana_form.setSpacing(12)
-        grafana_layout.addLayout(grafana_form)
-        self._grafana_username = QLineEdit()
-        self._grafana_password = QLineEdit()
-        self._grafana_password.setEchoMode(QLineEdit.EchoMode.Password)
-        self._grafana_token = QLineEdit()
-        self._grafana_token.setEchoMode(QLineEdit.EchoMode.Password)
-        grafana_form.addRow(make_form_label("Имя пользователя"), self._grafana_username)
-        grafana_form.addRow(make_form_label("Пароль"), self._grafana_password)
-        grafana_form.addRow(make_form_label("API-токен (приоритетнее пароля)"), self._grafana_token)
-
         layout.addWidget(confluence_card)
-        layout.addWidget(grafana_card)
         layout.addWidget(
             make_hint_label(
-                "Если задан API-токен Grafana, Basic Auth не используется. "
-                "Пустые поля при сохранении не перезаписывают существующие значения."
+                "Учётные данные Grafana задаются отдельно для каждого дашборда "
+                "в окне «Дашборды». Пустые поля при сохранении не перезаписывают "
+                "существующие значения."
             )
         )
         layout.addStretch()
@@ -276,9 +263,6 @@ class SettingsWindow(QDialog):
 
         self._confluence_username.setText(credentials.get_confluence_username() or "")
         self._confluence_token.setText(credentials.get_confluence_token() or "")
-        self._grafana_username.setText(credentials.get_grafana_username() or "")
-        self._grafana_password.setText(credentials.get_grafana_password() or "")
-        self._grafana_token.setText(credentials.get_grafana_token() or "")
 
     def _reset_all_settings(self) -> None:
         reply = QMessageBox.question(
@@ -286,6 +270,7 @@ class SettingsWindow(QDialog):
             "Сброс параметров",
             "Сбросить все настройки к значениям по умолчанию?\n\n"
             "Будут восстановлены параметры config.ini, удалены учётные данные "
+            "(Confluence и Grafana для всех дашбордов) "
             "и пользовательский путь к файлу конфигурации.",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No,
@@ -363,15 +348,6 @@ class SettingsWindow(QDialog):
             confluence_token = self._confluence_token.text().strip()
             if confluence_username and confluence_token:
                 credentials.set_confluence_auth(confluence_username, confluence_token)
-
-            grafana_username = self._grafana_username.text().strip()
-            grafana_password = self._grafana_password.text().strip()
-            if grafana_username and grafana_password:
-                credentials.set_grafana_basicauth(grafana_username, grafana_password)
-
-            grafana_token = self._grafana_token.text().strip()
-            if grafana_token:
-                credentials.set_grafana_token(grafana_token)
 
             self.config_saved.emit()
             QMessageBox.information(self, "Сохранено", "Настройки успешно сохранены.")

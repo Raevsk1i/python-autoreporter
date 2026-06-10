@@ -21,8 +21,10 @@ from PySide6.QtWidgets import (
 )
 
 from configuration.app_config import AppConfig
+from configuration.app_info import CREDIT_SHORT
 from ui.widgets import (
     make_button_row,
+    make_credit_label,
     make_form_label,
     make_hint_label,
     make_scrollable,
@@ -66,6 +68,7 @@ class DashboardsWindow(QDialog):
         splitter.setStretchFactor(0, 1)
         splitter.setStretchFactor(1, 2)
         root.addWidget(splitter, stretch=1)
+        root.addWidget(make_credit_label(CREDIT_SHORT))
 
         save_button = QPushButton("Сохранить в JSON")
         save_button.setObjectName("primaryButton")

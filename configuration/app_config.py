@@ -54,6 +54,44 @@ class AppConfig:
     general: GeneralConfig
 
 
+def default_config() -> AppConfig:
+    """Возвращает конфигурацию приложения по умолчанию."""
+    return AppConfig(
+        grafana=GrafanaConfig(
+            url="",
+            width="",
+            height="",
+            timeout="30",
+            timezone="Europe/Moscow",
+            org_id="1",
+            tmp_dir="tmp/grafana_panels",
+            dashboards_path="data/dashboards.json",
+            async_enabled=False,
+            max_workers="4",
+        ),
+        confluence=ConfluenceConfig(
+            url="",
+            space_key="",
+            ssl_certificate_path="",
+            macro_id="9dbdf19d-b8c1-2g5d-b3e5-7f1e3a84682e",
+            async_enabled=False,
+            max_workers="4",
+        ),
+        general=GeneralConfig(
+            report_html_template_path="",
+            qss_path="data/style.qss",
+        ),
+    )
+
+
+def clear_config_path() -> None:
+    """Удаляет пользовательский путь к config.ini из keyring."""
+    try:
+        keyring.delete_password(SERVICE_NAME, "CONFIG_PATH")
+    except Exception:
+        pass
+
+
 def get_config_path() -> Path:
     """
     Возвращает путь к файлу config.ini.

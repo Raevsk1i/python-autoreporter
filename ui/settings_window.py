@@ -47,7 +47,6 @@ class SettingsWindow(QDialog):
     """Редактирование config.ini и учётных данных в keyring."""
 
     config_saved = Signal()
-    all_parameters_reset = Signal()
 
     def __init__(self, parent=None) -> None:
         super().__init__(parent)
@@ -311,7 +310,6 @@ class SettingsWindow(QDialog):
             self._config_path_label.setText(f"Путь: {self._config_path}")
             self._load_values()
 
-            self.all_parameters_reset.emit()
             self.config_saved.emit()
             QMessageBox.information(
                 self,

@@ -230,7 +230,6 @@ class MainWindow(QMainWindow):
         if self._settings_window is None:
             self._settings_window = SettingsWindow(self)
             self._settings_window.config_saved.connect(self._on_config_saved)
-            self._settings_window.all_parameters_reset.connect(self._on_all_parameters_reset)
 
         self._settings_window.show()
         self._settings_window.raise_()
@@ -263,11 +262,6 @@ class MainWindow(QMainWindow):
             self._dashboards_window.update_config(self._config)
 
         self._append_log("Конфигурация обновлена.")
-
-    def _on_all_parameters_reset(self) -> None:
-        self._theme_manager.reset()
-        self._update_theme_button_text()
-        self._append_log("Все параметры сброшены к значениям по умолчанию.")
 
     def _refresh_dashboards(self) -> None:
         if self._report_service is None:

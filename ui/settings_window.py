@@ -112,7 +112,6 @@ class SettingsWindow(QDialog):
         card_layout.addLayout(form)
 
         self._grafana_fields = {
-            "url": QLineEdit(),
             "width": QLineEdit(),
             "height": QLineEdit(),
             "timeout": QLineEdit(),
@@ -124,7 +123,6 @@ class SettingsWindow(QDialog):
         }
 
         labels = {
-            "url": "URL",
             "width": "Ширина панели (px)",
             "height": "Высота панели (px)",
             "timeout": "Таймаут (сек)",
@@ -245,7 +243,6 @@ class SettingsWindow(QDialog):
         general = self._config.general
 
         grafana_values = {
-            "url": grafana.url,
             "width": grafana.width,
             "height": grafana.height,
             "timeout": grafana.timeout,

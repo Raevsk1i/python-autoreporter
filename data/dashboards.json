@@ -1,5 +1,6 @@
 {
   "leronet": {
+    "grafana_url": "https://grafana.example.com",
     "dashboard_uid": "abc123",
     "dashboard_slug": "leronet-nt",
     "panels": [

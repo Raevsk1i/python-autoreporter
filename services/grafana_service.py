@@ -75,7 +75,7 @@ class GrafanaService:
         self._dashboards_path = Path(config.dashboards_path)
         self._parallel = parallel
         self._max_workers = max(1, max_workers)
-        self._chart_theme = "black" if config.dark_chart_theme else "light"
+        self._chart_theme = "dark" if config.dark_chart_theme else "light"
 
     def load_dashboards(self) -> dict[str, Dashboard]:
         """

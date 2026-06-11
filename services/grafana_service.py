@@ -75,6 +75,7 @@ class GrafanaService:
         self._dashboards_path = Path(config.dashboards_path)
         self._parallel = parallel
         self._max_workers = max(1, max_workers)
+        self._chart_theme = "dark" if config.dark_chart_theme else "light"
 
     def load_dashboards(self) -> dict[str, Dashboard]:
         """
@@ -138,6 +139,7 @@ class GrafanaService:
             f"&panelId={panel_id}"
             f"&width={self._width}&height={self._height}"
             f"&tz={self._timezone}"
+            f"&theme={self._chart_theme}"
         )
 
     def _download_panel_image(self, url: str, dashboard: Dashboard) -> requests.Response:

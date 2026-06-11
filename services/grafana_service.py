@@ -6,6 +6,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import urlencode
 from zoneinfo import ZoneInfo
 
 import requests
@@ -135,15 +136,23 @@ class GrafanaService:
     ) -> str:
         """Формирует URL для рендеринга отдельной панели Grafana."""
         grafana_url = dashboard.grafana_url.rstrip("/")
+        query = urlencode(
+            {
+                "OrgId": self._org_id,
+                "from": from_time_ms,
+                "to": to_time_ms,
+                "panelId": panel_id,
+                "width": self._width,
+                "height": self._height,
+                "tz": self._timezone,
+                "theme": self._chart_theme,
+            }
+        )
+
         return (
             f"{grafana_url}/render/d-solo/"
             f"{dashboard.dashboard_uid}/{dashboard.dashboard_slug}"
-            f"?OrgId={self._org_id}"
-            f"&from={from_time_ms}&to={to_time_ms}"
-            f"&panelId={panel_id}"
-            f"&width={self._width}&height={self._height}"
-            f"&tz={self._timezone}"
-            f"&theme={self._chart_theme}"
+            f"?{query}"
         )
 
     def _download_panel_image(self, url: str, dashboard: Dashboard) -> requests.Response:

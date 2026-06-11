@@ -20,6 +20,8 @@ from configuration.credentials import (
 
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 DOWNLOAD_CHUNK_SIZE = 8192
+GRAFANA_THEME_DARK = "dark"
+GRAFANA_THEME_LIGHT = "light"
 
 
 @dataclass(frozen=True)
@@ -75,7 +77,9 @@ class GrafanaService:
         self._dashboards_path = Path(config.dashboards_path)
         self._parallel = parallel
         self._max_workers = max(1, max_workers)
-        self._chart_theme = "black" if config.dark_chart_theme else "light"
+        self._chart_theme = (
+            GRAFANA_THEME_DARK if config.dark_chart_theme else GRAFANA_THEME_LIGHT
+        )
 
     def load_dashboards(self) -> dict[str, Dashboard]:
         """

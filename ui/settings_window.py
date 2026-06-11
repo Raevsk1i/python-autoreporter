@@ -139,6 +139,9 @@ class SettingsWindow(QDialog):
         self._grafana_async_checkbox = QCheckBox("Асинхронно (многопоточное скачивание графиков)")
         form.addRow(make_form_label("Многопоточность"), self._grafana_async_checkbox)
 
+        self._grafana_dark_theme_checkbox = QCheckBox("Тёмная тема графиков")
+        form.addRow(make_form_label("Тема графиков"), self._grafana_dark_theme_checkbox)
+
         layout.addWidget(card)
         layout.addStretch()
         return make_scrollable(content)
@@ -243,6 +246,7 @@ class SettingsWindow(QDialog):
         for key, value in grafana_values.items():
             self._grafana_fields[key].setText(value)
         self._grafana_async_checkbox.setChecked(grafana.async_enabled)
+        self._grafana_dark_theme_checkbox.setChecked(grafana.dark_chart_theme)
 
         confluence_values = {
             "url": confluence.url,
@@ -331,6 +335,7 @@ class SettingsWindow(QDialog):
                 grafana=GrafanaConfig(
                     **{key: field.text().strip() for key, field in self._grafana_fields.items()},
                     async_enabled=self._grafana_async_checkbox.isChecked(),
+                    dark_chart_theme=self._grafana_dark_theme_checkbox.isChecked(),
                 ),
                 confluence=ConfluenceConfig(
                     **{key: field.text().strip() for key, field in self._confluence_fields.items()},

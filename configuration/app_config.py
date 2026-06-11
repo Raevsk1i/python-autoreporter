@@ -22,6 +22,7 @@ class GrafanaConfig:
     dashboards_path: str
     async_enabled: bool
     max_workers: str
+    dark_chart_theme: bool
 
 
 @dataclass(frozen=True)
@@ -66,6 +67,7 @@ def default_config() -> AppConfig:
             dashboards_path="data/dashboards.json",
             async_enabled=False,
             max_workers="4",
+            dark_chart_theme=False,
         ),
         confluence=ConfluenceConfig(
             url="",
@@ -165,6 +167,7 @@ def load_config(config_path: str | Path | None = None) -> AppConfig:
         dashboards_path=parser.get("grafana", "dashboards_path"),
         async_enabled=parser.getboolean("grafana", "async", fallback=legacy_async),
         max_workers=parser.get("grafana", "max_workers", fallback=legacy_max_workers),
+        dark_chart_theme=parser.getboolean("grafana", "dark_chart_theme", fallback=False),
     )
 
     confluence = ConfluenceConfig(
@@ -215,6 +218,7 @@ def save_config(config: AppConfig, config_path: str | Path | None = None) -> Pat
         "dashboards_path": config.grafana.dashboards_path,
         "async": str(config.grafana.async_enabled).lower(),
         "max_workers": config.grafana.max_workers,
+        "dark_chart_theme": str(config.grafana.dark_chart_theme).lower(),
     }
 
     parser["confluence"] = {
